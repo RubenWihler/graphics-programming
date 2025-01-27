@@ -41,10 +41,10 @@
 # 	$(shell commande) : exécution de commande shell
 
 # Variables
-CC := gcc
+CC := g++
 DEBUGER := gdb
-CFLAGS := -Wall -Wextra
-DEBUG_FLAGS := -g -O0
+CFLAGS := -Wall -std=c++11
+DEBUG_FLAGS := -g -DDEBUG -O0
 RELEASE_FLAGS := -O3 -Werror
 NAME :=app
 
@@ -61,8 +61,8 @@ RELEASE_BIN := $(BIN_DIR)/release/$(NAME)
 
 # Recherche récursive des fichiers source et headers
 # (excluant les fichier cachés .*)
-SRC_FILES := $(shell find $(SRC_DIR) -type f -name '*.c' -not -path '*/\.*')
-OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
+SRC_FILES := $(shell find $(SRC_DIR) -type f -name '*.cpp' -not -path '*/\.*')
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 # Règles principales
 .PHONY: all debug release clean help
@@ -89,7 +89,7 @@ $(RELEASE_BIN): $(OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 # Compilation des fichiers objets
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@ $(LIBS)
 

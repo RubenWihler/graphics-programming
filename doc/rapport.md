@@ -99,3 +99,38 @@ OpenGL s'occupe de la pipeline graphique. Il fournit des fonctions pour charger 
 Un shader est écrit en **GLSL** (OpenGL Shading Language). C'est un langage de programmation basé sur le C. Il est utilisé pour décrire comment les données doivent être traitées par le GPU.
 
 ### Installation de GLFW
+
+Je suis sur un Debian, donc j'ai installé GLFW avec le gestionnaire de paquets aptitude:
+
+```bash
+sudo apt install libglfw3
+sudo apt install libglfw3-dev
+```
+
+> **Note**: Je n'ai pas eu besoin de compiler moi-même GLFW, car il est disponible dans les dépôts de Debian.
+
+### Premier programme OpenGL
+
+J'ai utiliser la template de projet que j'utilise abituellement pour mes projet C. 
+Une template assez simple, avec un Makefile qui permet de compiler le projet en scanant tous les fichiers .c dans le dossier src.
+
+> Je ne sais toujours pas si je vais faire les projets en C ou en C++. J'ai vu que The Cherno utilise du C++. Ayant beaucoup plus d'expérience en C, je pense que je vais commencer par faire les projets en C. Si je vois que ca devient vraiment un bordel au niveau orgnisation, je passerai en C++.
+
+Mais bref j'ai fait 2 projet, un en C et un en C++. (Il y a juste le makefile qui change).
+
+#### Contenu
+
+J'ai copier coller le code de la doc de GLFW pour créer une fenêtre. J'ai ensuite ajouter un shader pour dessiner un triangle. (En gros j'ai rjt 5 lignes de code a l'endroit ou c'est marqué "Render here").
+
+#### Compilation
+
+Pour compiler le projet, j'ai ajouter les libraries suivante:
+
+```makefile
+LIBS := -lpthread -lglfw -lGL -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
+```
+
+> Honnêtement, je ne sais pas à quoi servent toutes ces librairies. D'ailleurs, pour la plupart, si je les enlève, le programme compile quand même. Mais bon, je vais les laisser, on sait jamais.
+
+
+
