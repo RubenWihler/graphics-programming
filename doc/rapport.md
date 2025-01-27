@@ -28,7 +28,29 @@ Pour atteindre mon objectif, j'ai décidé de suivre une méthodologie en 3 éta
 
 3. **Projet final**: Une fois que j'aurai acquis les bases, je pourrai commencer à travailler sur mon projet final.
 
-## ... A suivre
+## Mes composants
+
+Avant de commencer, je vais indiquer les composants et drivers de ma machine:
+
+```bash
+CPU: 10-core (2-mt/8-st) 13th Gen Intel Core i7-1355U (-MST AMCP-)
+speed/min/max: 630/400/5000:3700 MHz Kernel: 6.1.0-30-amd64 x86_64 Up: 7h 5m
+Mem: 5797.8/31784.2 MiB (18.2%) Storage: 953.87 GiB (3.7% used) Procs: 322
+Shell: Zsh inxi: 3.3.26
+Graphics:
+  Device-1: Intel Raptor Lake-P [Iris Xe Graphics] driver: i915 v: kernel
+  Device-2: NVIDIA GA107M [GeForce RTX 2050] driver: N/A
+  Device-3: Chicony ACER FHD User Facing type: USB driver: uvcvideo
+  Display: wayland server: X.Org v: 1.22.1.9 with: Xwayland v: 22.1.9
+    compositor: gnome-shell v: 43.9 driver: X: loaded: vesa
+    unloaded: fbdev,modesetting dri: iris gpu: i915 resolution:
+    1: 1920x1200~60Hz 2: 1920x1080~60Hz
+  API: OpenGL v: 4.6 Mesa 22.3.6 renderer: Mesa Intel Graphics (RPL-P)
+```
+
+> Comme on peut le voir, j'ai une carte graohique Nvidia RTX 2050.
+Un truc assez marant, c'est que je n'avais pas vu que je n'avais pas les drivers Nvidia installés. 
+Pour l'instant, ce n'est pas un problème, car je vais utiliser OpenGL pour apprendre les bases. Mais au bout d'un moment, je vais les installer, car j'aimerais bien utiliser CUDA pour tester un peu.
 
 ## Suivi de l'apprentissage
 
@@ -132,5 +154,79 @@ LIBS := -lpthread -lglfw -lGL -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXc
 
 > Honnêtement, je ne sais pas à quoi servent toutes ces librairies. D'ailleurs, pour la plupart, si je les enlève, le programme compile quand même. Mais bon, je vais les laisser, on sait jamais.
 
+### Utilisation de GLEW
 
+Pour utiliser les fonctions definis par OpenGL, il faut charger aller chercher dans les fichier dll des drivers du GPU de la machine. Pour cela, on utilise une librairie qui s'occupe de charger ces fonctions. J'ai choisi d'utiliser GLEW.
+
+> J'aurais aussi pu utiliser GLAD, mais on en a pas vraiment besoin pour l'instant. Si j'ai bien compris. GLAD fournit quelques fonctions en plus que GLEW, mais pour l'instant je n'en ai pas besoin.
+
+J'ai encore une fois utiliser apt pour installer GLEW:
+
+```bash
+sudo apt-get install libglew-dev
+```
+
+J'ai ensuite ajouter GLEW dans le makefile:
+
+```makefile
+LIBS := -lpthread -lglfw -lGL -lGLEW -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
+```
+
+J'ai ensuite modifier le 1er projet pour utiliser GLEW. J'ai egalement pris le temps de rearaanger un peu le code pour me familiariser avec les fonctions de base d'GLFW et GLEW.
+
+> Note: 
+En voulant afficher la version d'OpenGL, j'ai vu qu'il utilisait **Mesa**. Après une petite recherche, j'ai vu que Mesa est une implémentation open source d'OpenGL. Après avoir vu cela j'ai regarder si j'avais installer les drivers Nvidia. Et en effet, je n'avais pas les drivers Nvidia installés. Pour l'instant, ce n'est pas un problème, car je vais utiliser OpenGL pour apprendre les bases. Mais au bout d'un moment, je vais les installer, car j'aimerais bien utiliser CUDA pour tester un peu.
+
+Maintenant que j'ai installer GLEW, je vais pouvoir commencer à apprendre les bases de la programmation graphique.
+
+### Utilisation moderne d'OpenGL
+
+Auparavant, OpenGL utilisait une approche fixe pour dessiner des objets. C'est à dire que OpenGL fournissait des fonctions pour dessiner des formes géométriques de base (carré, triangle, etc). C'était assez limité, car on ne pouvait pas vraiment personnaliser les objets. 
+
+C'est ce que nous avons utilisé dans notre premier programme :
+
+```c
+glBegin(GL_TRIANGLES);
+glVertex2f( 0.0f, 0.5f);
+glVertex2f(-0.5f,-0.5f);
+glVertex2f( 0.5f,-0.5f);
+glEnd();
+```
+
+> On appelle cela le **fixed pipeline** ou **legacy OpenGL**. C'est une approche assez ancienne et limitée.
+
+Aujourd'hui, OpenGL utilise une approche plus moderne, appelée **programmable pipeline**. Cela signifie que nous devons écrire des shaders pour décrire comment les données doivent être traitées par le GPU.
+
+Pour l'instant je ne vais pas entrer dans les détails du fonctionnement de la pipeline.
+
+Pour dessiner notre triangle, nous avons besoin de 2 choses:
+
+- Un [**vertex buffer**](#vertex-buffer) pour stocker les données des sommets.
+- Un [**vertex shader**](#vertex-shader) pour décrire comment les données doivent être traitées par le GPU.
+
+#### Vertex buffer
+
+Un **vertex buffer** est juste un buffer, un block de données dans la memoire. La différence avec un array normal, c'est que les données sont stockées sur la carte graphique (VRAM) et non sur la RAM.
+
+En gros, on va stocker les données des sommets (vertices) dans un espace mémoire dans la VRAM.
+
+Ensuite, on va dire à OpenGL d'effectuer un **draw call**. C'est à dire qu'on va dire à OpenGL de lire les données du vertex buffer et de faire le rendu sur l'écran. Et c'est là que le vertex shader entre en jeu.
+
+#### Vertex shader
+
+Le **vertex shader** sert a décrire comment les données des sommets doivent être traitées par le GPU. Comment les sommets doivent être placés sur l'écran.
+
+> Pour rappel, un shader est juste un programme qui s'exécute sur le GPU.
+
+#### OpenGL est une machine d'état
+
+OpenGL est une **machine d'état**. Cela signifie que OpenGL a un état interne qui est modifié par les appels de fonctions. Par exemple, si on appelle `glClearColor`, cela modifie la couleur de fond. Si on appelle `glClear`, cela efface le buffer de couleur avec la couleur de fond.
+
+Donc, pour dessiner notre triangle, nous devons suivre ces étapes:
+
+1. Créer un vertex buffer et y stocker les données des sommets.
+2. Créer un vertex shader et le compiler.
+3. Créer un shader program et y attacher le vertex shader.
+4. Lier le vertex buffer au shader program.
+5. Appeler `glDrawArrays` pour dessiner le triangle.
 
