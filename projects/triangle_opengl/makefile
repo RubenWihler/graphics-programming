@@ -44,7 +44,7 @@
 CC := gcc
 DEBUGER := gdb
 CFLAGS := -Wall -Wextra
-DEBUG_FLAGS := -g -O0
+DEBUG_FLAGS := -g -O0 -DDEBUG
 RELEASE_FLAGS := -O3 -Werror
 NAME :=app
 

@@ -7,20 +7,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct _app_config_t{
-    int width, height;
-    const char* window_name;
-} app_config_t;
-                
+#include "config/app_config.h"
+#include "shaders/shader_manager.h"
+
 int init(app_config_t config, GLFWwindow** window);
-void clean();
 void print_version();
 
-const app_config_t APP_CONFIG = {
-    .window_name = "Test OpenGL #2",
-    .width =  640,
-    .height = 480
-};
+extern app_config_t APP_CONFIG;
 
 int main(void)
 {
@@ -31,6 +24,46 @@ int main(void)
     
     //Affichage des versions
     print_version();
+    
+    //un vertex par ligne
+    //1 seule attribut: 2 float - position xy
+    const float triangle_vertices[6] = {
+         0.0f,  0.5f, 
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+    };
+
+    unsigned int buffer_id;
+    glGenBuffers(1, &buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), triangle_vertices, GL_STATIC_DRAW);
+
+    //attributs
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    glEnableVertexAttribArray(0); // on active cette attribut
+    
+    const char *vertex = 
+        "#version 330 core\n"
+        "\n"
+        "layout(location=0) in vec4 position;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "   gl_Position = position;\n"
+        "}\n";
+    
+    const char *fragment = 
+        "#version 330 core\n"
+        "\n"
+        "out vec4 color;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "   color = vec4(0, .4, 1.0, 1.0);\n"
+        "}\n";
+
+    unsigned int shader_program = create_shader_program(vertex, fragment);
+    glUseProgram(shader_program);
 
     //Temps que la fenêtre n'est pas fermée
     while (!glfwWindowShouldClose(window))
@@ -38,13 +71,9 @@ int main(void)
         //On efface le buffer de couleur
         //(en gros on dessine un fond noir)
         glClear(GL_COLOR_BUFFER_BIT);
-        
-        //On dessine notre triangle
-        glBegin(GL_TRIANGLES);
-        glVertex2f( 0.0f, 0.5f);
-        glVertex2f(-0.5f,-0.5f);
-        glVertex2f( 0.5f,-0.5f);
-        glEnd();
+            
+        //On fais le draw call sur le buffer bindé
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
@@ -55,8 +84,11 @@ int main(void)
         glfwPollEvents();
     }
     
+
+
     //On libère la mémoire
-    clean();
+    glDeleteProgram(shader_program);
+    glfwTerminate();
 
     return 0;
 }
@@ -91,15 +123,12 @@ int init(app_config_t config, GLFWwindow** window)
     return 0;
 }
 
-void clean()
-{
-    glfwTerminate();
-}
-
 void print_version()
 {
+    #ifdef DEBUG
     printf("OpenGL version: %s\n", glGetString(GL_VERSION));
     printf("GLFW version: %s\n", glfwGetVersionString());
     printf("GLEW version: %s\n", glewGetString(GLEW_VERSION));
+    #endif
 }
 

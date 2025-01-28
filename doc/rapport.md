@@ -222,11 +222,109 @@ Le **vertex shader** sert a décrire comment les données des sommets doivent ê
 
 OpenGL est une **machine d'état**. Cela signifie que OpenGL a un état interne qui est modifié par les appels de fonctions. Par exemple, si on appelle `glClearColor`, cela modifie la couleur de fond. Si on appelle `glClear`, cela efface le buffer de couleur avec la couleur de fond.
 
-Donc, pour dessiner notre triangle, nous devons suivre ces étapes:
+#### Vertex Attribut
 
-1. Créer un vertex buffer et y stocker les données des sommets.
-2. Créer un vertex shader et le compiler.
-3. Créer un shader program et y attacher le vertex shader.
-4. Lier le vertex buffer au shader program.
-5. Appeler `glDrawArrays` pour dessiner le triangle.
+Pour decrire les données des sommets, on utilise des **vertex attributs**. Un **vertex attribut** est une variable qui est associée à un vertex. Par exemple, on peut avoir un vertex attribut pour la position, un autre pour la couleur, etc.
+
+Prenons l'exemple de notre triangle :
+
+```c
+// Un vertex est composé de 1 attribut (la position xy): C'est un vec2 (2 floats)
+float positions[] = {
+     0.0f,  0.5f,//un vertex
+    -0.5f, -0.5f,//un autre vertex
+     0.5f, -0.5f,//encore un autre vertex
+};
+```
+
+Ici nous voyons que chaque vertex est composé de 2 floats (x et y). OpenGL ne voit qu'un bloc de données.
+Il faut donc dire à OpenGL comment lire ces données. C'est là que les **vertex attributs** entrent en jeu.
+
+Dans notre cas, nous avons un seul attribut (la position xy). Nous devons donc dire à OpenGL comment lire ces données.
+
+```c
+//Declare un uint pour stocker l'id du buffer
+uint buffer_id;
+//On génère un buffer et on stocke l'id dans buffer_id
+glGenBuffers(1, &buffer_id);
+//On bind le buffer (on dit à OpenGL que le buffer courant de type GL_ARRAY_BUFFER est buffer_id)
+glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+//On copie les données du tableau positions dans le buffer
+glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), triangle_vertices, GL_STATIC_DRAW);
+
+//attributs
+//On dit à OpenGL comment lire les données
+//0: l'index de l'attribut (ici nous avons un seul attribut)
+//2: le nombre de composantes par attribut (ici 2 car nous avons des vec2 (2 floats))
+//GL_FLOAT: le type des données
+//GL_FALSE: si les données doivent être normalisées (ce sont deja des floats)
+//2 * sizeof(float): le stride (la distance entre 2 attributs) (en gros la taille d'un vertex)
+//0: l'offset (de combien de bytes on doit décaler pour arriver à l'attribut) (ici 0 car on commence au début)
+glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+glEnableVertexAttribArray(0); // on active l'attribut 0
+```
+
+#### Création des shaders
+
+Pour créer un shader, on doit écrire un programme en **GLSL**. Ensuite, on doit le compiler et le lier à un **programme** OpenGL.
+
+Un **programme** OpenGL est juste un ensemble de shaders. On peut avoir plusieurs shaders dans un programme.
+
+Par exemple, pour notre triangle, nous avons besoin d'un **vertex shader** et d'un **fragment shader**. Nous allons donc créer Un programme, compiler les shaders, les attacher au programme et link le programme (un peu comme un programme C).
+
+```c
+unsigned int program = glCreateProgram();
+unsigned int vs = compile_shader(GL_VERTEX_SHADER, vertex_src);
+unsigned int fs = compile_shader(GL_FRAGMENT_SHADER, fragment_src);
+
+glAttachShader(program, vs);
+glAttachShader(program, fs);
+glLinkProgram(program);
+glValidateProgram(program);
+
+glDeleteShader(vs);
+glDeleteShader(fs);
+```
+
+Maintenant que nous avons nos fonctions pour gérer les shaders, nous devons les créer.
+
+#### Code vertex shader
+
+Le `#version 330 core` indique la version de GLSL que nous utilisons. Ici, nous utilisons la version 3.3. `core` signifie que nous n'utilisons que les fonctionnalités de base de GLSL.
+
+`layout(location = 0)` indique que cet attribut est à l'index 0. Cela correspond à l'index que nous avons donné à `glVertexAttribPointer`.
+
+Le `in` signifie que c'est un attribut d'entrée. C'est à dire que c'est un attribut qui est envoyé par le CPU au GPU.
+
+Le type `vec4` est un vecteur de 4 floats. C'est un type de base en GLSL. Ici, nous utilisons un `vec4` pour la position. Bien que nous n'utilisions que 2 floats (x et y), nous devons utiliser un `vec4` car OpenGL attend un `vec4`.
+
+Ensuite, nous avons la fonction `main`. C'est la fonction qui sera exécutée par le GPU pour chaque vertex. Ici, nous devons juste retourner la position du vertex (c'est ce que fait `gl_Position`).
+
+```glsl
+#version 330 core
+
+layout(location = 0) in vec4 position;
+
+void main()
+{
+    gl_Position = position;
+}
+```
+
+#### Code fragment shader
+
+Pour le fragment shader, c'est un peu plus simple. Nous n'avons pas d'attributs d'entrée. Nous devons juste retourner la couleur du pixel.
+
+Pour cela, nous definissons une variable `color` de type `vec4`. Remarquez que contrairement au vertex shader, nous utilisons le mot-clé `out` pour indiquer que c'est une variable de sortie.(GPU -> CPU). Pour les variables de sortie, nous n'avons pas besoin de spécifier l'index (`layout(...)`)
+
+```glsl
+#version 330 core
+
+out vec4 color;
+
+void main()
+{
+    color = vec4(0.0, 1.0, 0.0, 1.0);
+}
+```
 
