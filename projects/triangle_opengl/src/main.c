@@ -82,8 +82,7 @@ int main(void)
         //dessine le rectangle bleu
         glUseProgram(shader_program_basic);
 
-        //exemple d'une erreur. (GL_UNSIGNED_INT pour que ca marche)
-        GLCALL(glDrawElements(GL_TRIANGLES, 3 * 3, GL_INT, NULL));
+        GLCALL(glDrawElements(GL_TRIANGLES, 3 * 3, GL_UNSIGNED_INT, NULL));
 
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
