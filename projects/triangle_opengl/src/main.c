@@ -9,6 +9,7 @@
 
 #include "config/app_config.h"
 #include "shaders/shader_manager.h"
+#include "shaders/shader_parser.h"
 
 int init(app_config_t config, GLFWwindow** window);
 void print_version();
@@ -24,7 +25,9 @@ int main(void)
     
     //Affichage des versions
     print_version();
-    
+        
+
+
     //un vertex par ligne
     //1 seule attribut: 2 float - position xy
     const float triangle_vertices[6] = {
@@ -42,27 +45,11 @@ int main(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glEnableVertexAttribArray(0); // on active cette attribut
     
-    const char *vertex = 
-        "#version 330 core\n"
-        "\n"
-        "layout(location=0) in vec4 position;\n"
-        "\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = position;\n"
-        "}\n";
-    
-    const char *fragment = 
-        "#version 330 core\n"
-        "\n"
-        "out vec4 color;\n"
-        "\n"
-        "void main()\n"
-        "{\n"
-        "   color = vec4(0, .4, 1.0, 1.0);\n"
-        "}\n";
+    shader_program_source_t* shader_source_code = 
+        shader_program_source_parse("res/shaders/basic");
 
-    unsigned int shader_program = create_shader_program(vertex, fragment);
+    unsigned int shader_program = create_shader_program(shader_source_code->vertex,
+                                                        shader_source_code->fragment);
     glUseProgram(shader_program);
 
     //Temps que la fenêtre n'est pas fermée
