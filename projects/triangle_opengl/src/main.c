@@ -28,37 +28,45 @@ int main(void)
         
     //un vertex par ligne
     //1 seule attribut: 2 float - position xy
-    const float triangle_vertices[] = {
-        -0.5f, -0.5f, 
-         0.5f, -0.5f,
-         0.5f,  0.5f,
-        
-        -0.5f, -0.5f, 
-         0.5f,  0.5f,
-        -0.5f,  0.5f,
+    const float positions[] = {
+        -0.5f, -0.5f, // vertex 0
+         0.5f, -0.5f, // vertex 1
+         0.5f,  0.5f, // vertex 2
+        -0.5f,  0.5f, // vertex 3
     };
 
-    //Création du buffer
-    unsigned int buffer_id;
-    glGenBuffers(1, &buffer_id);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, 2 * 6 * sizeof(float), triangle_vertices, GL_STATIC_DRAW);
+    const unsigned int indices[] = {
+        0, 1, 2, //1er  triangle
+        0, 2, 3  //2eme triangle
+    };
 
+    //Création d'un buffer pour les vertex
+    unsigned int vertex_buffer;
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_STATIC_DRAW);
+
+    //Attribut pour les vertex.
     //Attribut 0: position
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(*positions), 0);
     glEnableVertexAttribArray(0); // on active cette attribut
     
+    unsigned int indice_buffer;
+    glGenBuffers(1, &indice_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indice_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
+
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
-    shader_program_source_t* shader_source_code_red = shader_program_source_parse("res/shaders/red");
+    //shader_program_source_t* shader_source_code_red = shader_program_source_parse("res/shaders/red");
 
     //Création des programmes a partir des sources
     unsigned int shader_program_basic = create_shader_program(shader_source_code_basic->vertex, shader_source_code_basic->fragment);
-    unsigned int shader_program_red   = create_shader_program(shader_source_code_basic->vertex, shader_source_code_red->fragment);
+    //unsigned int shader_program_red   = create_shader_program(shader_source_code_basic->vertex, shader_source_code_red->fragment);
 
     //Libération de la mémoire des sources
     shader_program_source_destroy(shader_source_code_basic);
-    shader_program_source_destroy(shader_source_code_red);
+    //shader_program_source_destroy(shader_source_code_red);
 
     //Temps que la fenêtre n'est pas fermée
     while (!glfwWindowShouldClose(window))
@@ -67,13 +75,9 @@ int main(void)
         //(en gros on dessine un fond noir)
         glClear(GL_COLOR_BUFFER_BIT);
             
-        //dessine le triangle bleu
+        //dessine le rectangle bleu
         glUseProgram(shader_program_basic);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        //dessine le triangle rouge
-        glUseProgram(shader_program_red);
-        glDrawArrays(GL_TRIANGLES, 3, 3);
+        glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL);
 
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
@@ -86,8 +90,8 @@ int main(void)
 
     //On libère la mémoire
     glDeleteProgram(shader_program_basic);
-    glDeleteProgram(shader_program_red);
-    glDeleteBuffers(1, &buffer_id);
+    //glDeleteProgram(shader_program_red);
+    glDeleteBuffers(1, &vertex_buffer);
     glfwTerminate();
 
     return 0;
