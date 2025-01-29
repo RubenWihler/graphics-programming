@@ -33,18 +33,20 @@ int main(void)
          0.5f, -0.5f, // vertex 1
          0.5f,  0.5f, // vertex 2
         -0.5f,  0.5f, // vertex 3
+         0.0f,  1.0f, // vertex 4
     };
 
     const unsigned int indices[] = {
-        0, 1, 2, //1er  triangle
-        0, 2, 3  //2eme triangle
+        0, 1, 2, //1er  triangle - triangle droit de la base de la maison
+        0, 2, 3, //2eme triangle - triangle gauche de la base de la maison
+        2, 4, 3, //3eme triangle - toit de la maison
     };
 
     //Création d'un buffer pour les vertex
     unsigned int vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 2 * 5 * sizeof(float), positions, GL_STATIC_DRAW);
 
     //Attribut pour les vertex.
     //Attribut 0: position
@@ -54,7 +56,7 @@ int main(void)
     unsigned int indice_buffer;
     glGenBuffers(1, &indice_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indice_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
 
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
@@ -77,7 +79,7 @@ int main(void)
             
         //dessine le rectangle bleu
         glUseProgram(shader_program_basic);
-        glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL);
+        glDrawElements(GL_TRIANGLES, 3 * 3, GL_UNSIGNED_INT, NULL);
 
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
