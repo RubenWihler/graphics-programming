@@ -6,13 +6,15 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "config/app_config.h"
 #include "shaders/shader_manager.h"
 #include "shaders/shader_parser.h"
+#include "gl_errors/gl_errors_manager.h"
 
-int init(app_config_t config, GLFWwindow** window);
-void print_version();
+static int init(app_config_t config, GLFWwindow** window);
+static void print_version();
 
 extern app_config_t APP_CONFIG;
 
@@ -76,10 +78,12 @@ int main(void)
         //On efface le buffer de couleur
         //(en gros on dessine un fond noir)
         glClear(GL_COLOR_BUFFER_BIT);
-            
+
         //dessine le rectangle bleu
         glUseProgram(shader_program_basic);
-        glDrawElements(GL_TRIANGLES, 3 * 3, GL_UNSIGNED_INT, NULL);
+
+        //exemple d'une erreur. (GL_UNSIGNED_INT pour que ca marche)
+        GLCALL(glDrawElements(GL_TRIANGLES, 3 * 3, GL_INT, NULL));
 
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
