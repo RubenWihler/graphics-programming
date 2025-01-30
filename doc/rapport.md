@@ -328,3 +328,118 @@ void main()
 }
 ```
 
+#### Utilisation des shaders
+
+Pour utiliser les shaders, nous devons les activer. C'est à dire que nous devons dire à OpenGL d'utiliser le programme que nous avons créé.
+
+```c
+glUseProgram(program);
+```
+
+> `program` est l'id du programme que nous avons créé (avec `glCreateProgram`).
+
+#### Index Buffer
+
+La manière dont nous avons dessiné notre rectangle est assez simple. Nous avons juste donné les coordonnées des sommets. Cependant, ce n'est pas la manière la plus optimale de dessiner des objets. En effet, plusieurs sommets ont les mêmes coordonnées, il y a donc de la redondance.
+
+```c
+const float positions[] = {
+    -0.5f, -0.5f,
+     0.5f, -0.5f,
+     0.5f,  0.5f,
+
+    -0.5f, -0.5f, //redondant
+     0.5f,  0.5f, //redondant
+    -0.5f,  0.5f,
+};
+```
+
+> Ici ce n'est pas un problème, car nous n'avons que 6 sommets. Mais si nous avons des milliers de sommets comme la plupart des modèles 3D, il est bien plus efficace de réutiliser les sommets.
+
+
+Pour éviter cela, nous pouvons utiliser un **index buffer**. Un **index buffer** est un buffer qui contient les indices des sommets. Cela permet de réutiliser les sommets.
+
+En gros, au lieu de dire à OpenGL de dessiner chaque sommet, nous lui spécifions les indices des sommets à dessiner.
+
+Pour cela nous allons donc créer un autre tableau qui contient les indices des sommets a dessiner dans l'ordre.
+
+```c
+//les vertex qui representet les positions des sommets
+const float positions[] = {
+    -0.5f, -0.5f,
+     0.5f, -0.5f,
+     0.5f,  0.5f,
+    -0.5f,  0.5f,
+};
+
+//les indices des sommets à dessiner
+const unsigned int indices[] = {
+    0, 1, 2, //1er  triangle
+    0, 2, 3, //2eme triangle
+};
+```
+
+> Comme on peut le voir, nous avons 4 sommets et 6 indices. Cela signifie que nous avons 2 triangles. Le premier triangle est composé des sommets 0, 1 et 2. Le deuxième triangle est composé des sommets 0, 2 et 3.
+
+Pour utiliser ces indices, nous devons créer notre **index buffer**. Pour cela nous allons suivre les mêmes étapes que pour le **vertex buffer**:
+
+1. On génère un buffer et stocke son id
+2. On bind le buffer
+3. On copie les données dans le buffer
+
+La seule différence est que nous utilisons `GL_ELEMENT_ARRAY_BUFFER` au lieu de `GL_ARRAY_BUFFER`.
+
+```c
+unsigned int indice_buffer;
+glGenBuffers(1, &indice_buffer);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indice_buffer);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
+```
+
+Ensuite, pour le draw call, nous devons utiliser `glDrawElements` au lieu de `glDrawArrays`.
+
+```c
+glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL);
+```
+
+> `GL_TRIANGLES` indique que nous dessinons des triangles.  
+`2 * 3` indique que nous avons 2 triangles.  
+`GL_UNSIGNED_INT` indique que les indices sont des `unsigned int`.  
+`NULL` indique que nous n'avons pas d'offset.
+
+#### Uniforms
+
+Les **uniforms** sont des variables qui sont envoyées par le CPU au GPU. Contrairement aux **vertex attributs**, les **uniforms** sont les mêmes pour tous les vertices.
+
+Pour utiliser les **uniforms**, nous devons les déclarer des 2 côtés (CPU et GPU).
+
+Nous allons commencer par le GPU, autrement dit le **fragment shader**.
+
+```glsl
+#version 330 core
+
+out vec4 color;
+
+uniform vec4 u_color;
+
+void main()
+{
+    color = u_color;
+}
+```
+
+> `uniform vec4 u_color;` déclare un uniform de type `vec4` appelé `u_color`. Nous renvoyons ensuite `u_color` comme couleur du pixel.
+
+Ensuite, nous devons définir la valeur de `u_color` du côté CPU. Pour cela, nous devons d'abord obtenir l'emplacement de `u_color` dans le programme. Une fois récupéré, nous pouvons définir la valeur de `u_color`.
+
+```c
+int color_location = glGetUniformLocation(program, "u_color");
+assert(color_location != -1);//on vérifie que l'uniform existe
+glUniform4f(color_location, 0.2f, 0.3f, 0.8f, 1.0f);
+```
+
+> Il est important que le nom de l'uniform soit le même dans le shader et dans le code CPU. Sinon, `glGetUniformLocation` renverra `-1`.
+
+> `glUniform4f` définit la valeur de l'uniform. Ici, nous définissons `u_color` à `(0.2f, 0.3f, 0.8f, 1.0f)`. Il existe plusieurs fonctions `glUniform` pour différents types de données ([voir documentation](https://docs.gl/gl4/glUniform)). Ici, nous utilisons `glUniform4f` car `u_color` est de type `vec4` (4 floats).
+
+

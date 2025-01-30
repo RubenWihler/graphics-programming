@@ -49,7 +49,7 @@ RELEASE_FLAGS := -O3 -Werror
 NAME :=app
 
 # Librairies
-LIBS := -lpthread -lglfw -lGL -lGLEW -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
+LIBS := -lm -lpthread -lglfw -lGL -lGLEW -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
 
 #definition des preprocesseurs
 CFLAGS += -DGLEW_STATIC

@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <assert.h>
 
 #include "config/app_config.h"
@@ -35,20 +36,18 @@ int main(void)
          0.5f, -0.5f, // vertex 1
          0.5f,  0.5f, // vertex 2
         -0.5f,  0.5f, // vertex 3
-         0.0f,  1.0f, // vertex 4
     };
 
     const unsigned int indices[] = {
         0, 1, 2, //1er  triangle - triangle droit de la base de la maison
         0, 2, 3, //2eme triangle - triangle gauche de la base de la maison
-        2, 4, 3, //3eme triangle - toit de la maison
     };
 
     //Création d'un buffer pour les vertex
     unsigned int vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, 2 * 5 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_STATIC_DRAW);
 
     //Attribut pour les vertex.
     //Attribut 0: position
@@ -58,7 +57,7 @@ int main(void)
     unsigned int indice_buffer;
     glGenBuffers(1, &indice_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indice_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
 
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
@@ -72,6 +71,21 @@ int main(void)
     shader_program_source_destroy(shader_source_code_basic);
     //shader_program_source_destroy(shader_source_code_red);
 
+    glUseProgram(shader_program_basic);
+    
+    //Récupération de l'emplacement de l'uniforme u_color (du fragment shader)
+    int color_location = glGetUniformLocation(shader_program_basic, "u_color");
+    assert(color_location != -1);
+    
+    //Récupération de l'emplacement de l'uniforme u_time (du vertex shader)
+    int time_location = glGetUniformLocation(shader_program_basic, "u_time");
+    assert(time_location != -1);
+
+    float r = 0.0f;
+    float time = 0.0f;
+    float r_incr = 0.01f;
+    float time_incr = 0.1f;
+
     //Temps que la fenêtre n'est pas fermée
     while (!glfwWindowShouldClose(window))
     {   
@@ -79,11 +93,19 @@ int main(void)
         //(en gros on dessine un fond noir)
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //dessine le rectangle bleu
-        glUseProgram(shader_program_basic);
+        //On assigne les valeurs des uniformes
+        glUniform4f(color_location, r, 0.2f, 0.9f, 1.0f);
+        glUniform1f(time_location, time);
+        GLCALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 3 * 3, GL_UNSIGNED_INT, NULL));
+        //On change la couleur
+        if(r > 1 || r < 0) r_incr *= -1;
+        r += r_incr;
 
+        //On change le temps pour l'animation
+        if(time > 2 * M_PI) time = 0;
+        time += time_incr;
+        
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
         //et on met en attente le buffer ou on va dessiner
@@ -121,6 +143,9 @@ int init(app_config_t config, GLFWwindow** window)
 
     // Make the window's context current
     glfwMakeContextCurrent(*window);
+    
+    //activer la vsync
+    if(config.vsync) glfwSwapInterval(1);
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK)
