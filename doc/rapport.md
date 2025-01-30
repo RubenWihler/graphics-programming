@@ -442,4 +442,11 @@ glUniform4f(color_location, 0.2f, 0.3f, 0.8f, 1.0f);
 
 > `glUniform4f` définit la valeur de l'uniform. Ici, nous définissons `u_color` à `(0.2f, 0.3f, 0.8f, 1.0f)`. Il existe plusieurs fonctions `glUniform` pour différents types de données ([voir documentation](https://docs.gl/gl4/glUniform)). Ici, nous utilisons `glUniform4f` car `u_color` est de type `vec4` (4 floats).
 
+#### Vertex Arrays
+
+Les **vertex arrays** sont une manière plus moderne de définir les attributs des sommets. Cela permet de définir les attributs des sommets en une seule fois.
+
+Le concept de **vertex arrays** n'existe pas dans la plupart des autre API graphiques (DirectX, Vulkan, etc). C'est une fonctionnalité spécifique à OpenGL.
+
+
 

@@ -43,6 +43,10 @@ int main(void)
         0, 2, 3, //2eme triangle - triangle gauche de la base de la maison
     };
 
+    unsigned int vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
     //Création d'un buffer pour les vertex
     unsigned int vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
@@ -54,9 +58,10 @@ int main(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(*positions), 0);
     glEnableVertexAttribArray(0); // on active cette attribut
     
-    unsigned int indice_buffer;
-    glGenBuffers(1, &indice_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indice_buffer);
+    ///Création d'un index buffer object
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
 
     //Chargement des shaders
@@ -86,6 +91,12 @@ int main(void)
     float r_incr = 0.01f;
     float time_incr = 0.1f;
 
+    //debind tout pour simuler une utilisation de plusieurs buffers
+    glBindVertexArray(0);
+    glUseProgram(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     //Temps que la fenêtre n'est pas fermée
     while (!glfwWindowShouldClose(window))
     {   
@@ -93,9 +104,15 @@ int main(void)
         //(en gros on dessine un fond noir)
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //On assigne les valeurs des uniformes
+        //shaders
+        glUseProgram(shader_program_basic);
         glUniform4f(color_location, r, 0.2f, 0.9f, 1.0f);
         glUniform1f(time_location, time);
+
+        //bind notre VAO
+        glBindVertexArray(vao);
+
+        //draw call
         GLCALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
 
         //On change la couleur
@@ -126,14 +143,19 @@ int main(void)
 
 int init(app_config_t config, GLFWwindow** window)
 {
-    //Init GLFW
+    //Init GLFW notre librairie pour gérer les fenêtres et les événements
     if (!glfwInit())
     {
         fprintf(stderr,"Error while init GLFW\n");
         return -1;
     }
     
-    // Create a windowed mode window and its OpenGL context
+    // Configuration de la version d'OpenGL
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.glfw_context_major_version);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.glfw_context_minor_version);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, config.opengl_profile);
+
+    // Creation de la fenêtre
     *window = glfwCreateWindow(config.width, config.height, config.window_name, NULL, NULL);
     if (!(*window))
     {
@@ -141,13 +163,14 @@ int init(app_config_t config, GLFWwindow** window)
         return -1;
     }
 
-    // Make the window's context current
+    // On rend le contexte courant
     glfwMakeContextCurrent(*window);
     
     //activer la vsync
     if(config.vsync) glfwSwapInterval(1);
 
-    // Initialize GLEW
+    // Initialisation de GLEW (pour avoir acces aux fonctions OpenGL)
+    // GLEW permet de charger les fonctions OpenGL a partir du driver de la carte graphique
     if (glewInit() != GLEW_OK)
     {
         fprintf(stderr,"Error while init GLEW: %s\n", glewGetErrorString(glewInit()));
