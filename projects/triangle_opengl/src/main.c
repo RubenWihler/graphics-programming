@@ -12,7 +12,9 @@
 #include "config/app_config.h"
 #include "shaders/shader_manager.h"
 #include "shaders/shader_parser.h"
-#include "gl_errors/gl_errors_manager.h"
+#include "log/log.h"
+#include "vertex_buffer/vertex_buffer.h"
+#include "index_buffer/index_buffer.h"
 
 static int init(app_config_t config, GLFWwindow** window);
 static void print_version();
@@ -48,11 +50,8 @@ int main(void)
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    //Création d'un buffer pour les vertex
-    unsigned int vertex_buffer;
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_STATIC_DRAW);
+    vertex_buffer_t vbo;
+    vertex_buffer_init(&vbo, positions, 4 * 2 * sizeof(float));
 
     //Attribut pour les vertex.
     //Attribut 0: position
@@ -60,10 +59,8 @@ int main(void)
     glEnableVertexAttribArray(0); // on active cette attribut
     
     ///Création d'un index buffer object
-    unsigned int ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * 3 * sizeof(*indices), indices, GL_STATIC_DRAW);
+    index_buffer_t ibo;
+    index_buffer_init(&ibo, indices, 2 * 3);
 
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
@@ -76,10 +73,10 @@ int main(void)
     assert(color_location != -1 && time_location != -1 && "Error while getting uniform location");
 
     //debind tout pour simuler une utilisation de plusieurs buffers
-    glBindVertexArray(0);
     glUseProgram(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    vertex_buffer_unbind(&vbo);
+    index_buffer_unbind(&ibo);
 
     //declaration des variables pour l'animation
     float r = 0.0f;
@@ -103,7 +100,7 @@ int main(void)
         glBindVertexArray(vao);
 
         //draw call
-        GLCALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
+        ASSERT_GL_CALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
 
         //On change la couleur
         if(r > 1 || r < 0) r_incr *= -1;
@@ -125,8 +122,8 @@ int main(void)
 
     //On libère la mémoire
     glDeleteProgram(shader_program_basic);
-    glDeleteBuffers(1, &vertex_buffer);
-    glDeleteBuffers(1, &ibo);
+    vertex_buffer_destroy(&vbo);
+    index_buffer_destroy(&ibo);
     glDeleteVertexArrays(1, &vao);
     glfwTerminate();
 
