@@ -39,10 +39,11 @@ int main(void)
     };
 
     const unsigned int indices[] = {
-        0, 1, 2, //1er  triangle - triangle droit de la base de la maison
-        0, 2, 3, //2eme triangle - triangle gauche de la base de la maison
+        0, 1, 2, //1er  triangle
+        0, 2, 3, //2eme triangle
     };
 
+    //Création d'un vertex array object
     unsigned int vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -66,36 +67,25 @@ int main(void)
 
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
-    //shader_program_source_t* shader_source_code_red = shader_program_source_parse("res/shaders/red");
-
-    //Création des programmes a partir des sources
     unsigned int shader_program_basic = create_shader_program(shader_source_code_basic->vertex, shader_source_code_basic->fragment);
-    //unsigned int shader_program_red   = create_shader_program(shader_source_code_basic->vertex, shader_source_code_red->fragment);
-
-    //Libération de la mémoire des sources
     shader_program_source_destroy(shader_source_code_basic);
-    //shader_program_source_destroy(shader_source_code_red);
 
-    glUseProgram(shader_program_basic);
-    
     //Récupération de l'emplacement de l'uniforme u_color (du fragment shader)
     int color_location = glGetUniformLocation(shader_program_basic, "u_color");
-    assert(color_location != -1);
-    
-    //Récupération de l'emplacement de l'uniforme u_time (du vertex shader)
     int time_location = glGetUniformLocation(shader_program_basic, "u_time");
-    assert(time_location != -1);
-
-    float r = 0.0f;
-    float time = 0.0f;
-    float r_incr = 0.01f;
-    float time_incr = 0.1f;
+    assert(color_location != -1 && time_location != -1 && "Error while getting uniform location");
 
     //debind tout pour simuler une utilisation de plusieurs buffers
     glBindVertexArray(0);
     glUseProgram(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    //declaration des variables pour l'animation
+    float r = 0.0f;
+    float time = 0.0f;
+    float r_incr = 0.01f;
+    float time_incr = 0.1f;
 
     //Temps que la fenêtre n'est pas fermée
     while (!glfwWindowShouldClose(window))
@@ -109,7 +99,7 @@ int main(void)
         glUniform4f(color_location, r, 0.2f, 0.9f, 1.0f);
         glUniform1f(time_location, time);
 
-        //bind notre VAO
+        //bind notre VAO (qui contient: le vertex buffer, l'index buffer et les attributs)
         glBindVertexArray(vao);
 
         //draw call
@@ -126,6 +116,7 @@ int main(void)
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
         //et on met en attente le buffer ou on va dessiner
+        //si la vsync est activée, on attend la fin du rafraichissement de l'écran
         glfwSwapBuffers(window);
     
         //On gère les événements
