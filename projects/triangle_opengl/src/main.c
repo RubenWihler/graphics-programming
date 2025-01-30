@@ -125,8 +125,9 @@ int main(void)
 
     //On libère la mémoire
     glDeleteProgram(shader_program_basic);
-    //glDeleteProgram(shader_program_red);
     glDeleteBuffers(1, &vertex_buffer);
+    glDeleteBuffers(1, &ibo);
+    glDeleteVertexArrays(1, &vao);
     glfwTerminate();
 
     return 0;
