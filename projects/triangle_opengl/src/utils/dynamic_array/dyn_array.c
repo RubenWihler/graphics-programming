@@ -10,7 +10,7 @@ struct _dyn_array_t{
     size_t capacity;
     size_t count;
     size_t size;
-void* data;
+    void* data;
 };
 
 static void resize(dyn_array_t *arr, const size_t new_capacity);
