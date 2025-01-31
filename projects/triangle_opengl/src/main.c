@@ -13,13 +13,21 @@
 #include "shaders/shader_manager.h"
 #include "shaders/shader_parser.h"
 #include "log/log.h"
-#include "vertex_buffer/vertex_buffer.h"
-#include "index_buffer/index_buffer.h"
+
+#include "gl_object/vertex_buffer/vertex_buffer.h"
+#include "gl_object/index_buffer/index_buffer.h"
+
+#include "utils/dynamic_array/dyn_array.h"
 
 static int init(app_config_t config, GLFWwindow** window);
 static void print_version();
 
 extern app_config_t APP_CONFIG;
+
+static void print_int(void* value)
+{
+    printf("%d\n", *(int*)value);
+}
 
 int main(void)
 {
