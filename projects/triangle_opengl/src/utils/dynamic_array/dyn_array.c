@@ -219,16 +219,12 @@ static void resize(dyn_array_t *arr, size_t new_capacity)
 
 static void auto_growth(dyn_array_t *arr)
 {
-    if(arr->count == arr->capacity){
+    if(arr->count == arr->capacity)
         resize(arr, arr->capacity * 2);
-        printf("auto_growth: from %zu to %zu\n", arr->capacity / 2, arr->capacity);
-    }
 }
 
 static void auto_shrink(dyn_array_t *arr)
 {
-    if(arr->count < arr->capacity / 4){
+    if(arr->count < arr->capacity / 4)
         resize(arr, arr->capacity / 2);
-        printf("auto_shrink: from %zu to %zu\n", arr->capacity * 2, arr->capacity);
-    }
 }
