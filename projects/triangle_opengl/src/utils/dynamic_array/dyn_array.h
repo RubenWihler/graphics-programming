@@ -15,17 +15,16 @@ dyn_array_t* dyn_array_create(const size_t capacity, const size_t element_size);
 /// @brief Détruit un tableau dynamique
 /// @param arr Pointeur vers le tableau dynamique à détruire
 /// @note Le tableau ne doit plus être utilisé après cet appel
-/// @note les éléments du tableau ne sont pas détruits. Utiliser dyn_array_destory_all pour aussi détruire les éléments
-/// @see dyn_array_destory_all
+/// @note Si les éléments du tableau ont des ressources à libérer, utilisez dyn_array_destroy_complex
+/// @see dyn_array_destory_complex
 void dyn_array_destroy(dyn_array_t *arr);
 
-/// @brief Détruit un tableau dynamique et ses éléments
+/// @brief Détruit un tableau dynamique qui contient des éléments qui ont des ressources à libérer
 /// @param arr Pointeur vers le tableau dynamique à détruire
 /// @param destroy_element Pointeur vers une fonction qui détruit un élément du tableau
 /// @note Le tableau ne doit plus être utilisé après cet appel
-/// @note destroy_element ne doit pas être NULL
 /// @see dyn_array_destroy
-void dyn_array_destory_all(dyn_array_t *arr, void (*destroy_element)(void*));
+void dyn_array_destroy_complex(dyn_array_t *arr, void (*destroy_element)(void*));
 
 /// @brief Retourne le nombre d'éléments du tableau
 /// @param arr Pointeur vers le tableau dynamique
@@ -57,10 +56,20 @@ void* dyn_array_get(dyn_array_t *arr, const size_t index);
 /// @note si l'index est out of bounds, un message d'erreur est affiché sur stderr
 void dyn_array_set(dyn_array_t *arr, const size_t index, const void* value_ptr);
 
-/// @brief Ajoute un élément à la fin du tableau
+/// @brief Réserve de la mémoire pour un certain nombre d'éléments
+/// @param arr Pointeur vers le tableau dynamique
+/// @param count Nombre d'éléments à réserver
+/// @return Un pointeur vers la première case réservée
+/// @note si la capacité est insuffisante, le tableau est redimensionné à la capacité MINIMAL nécessaire
+/// @note chaque élément reservé augmente arr->count (comme si c'était des éléments ajoutés)
+void* dyn_array_reserve(dyn_array_t *arr, const size_t count);
+
+/// @brief Ajoute une copie de l'élément à la fin du tableau
 /// @param arr Pointeur vers le tableau dynamique
 /// @param value_ptr Pointeur vers la valeur à ajouter
 /// @note si la capacité du tableau est insuffisante, le tableau est redimensionné
+/// @note Si vous voulez ajouter un grand nombre d'éléments ou simplement eviter une copie inutile, utilisez dyn_array_reserve.
+/// @see dyn_array_reserve
 void dyn_array_push_back(dyn_array_t *arr, const void* value_ptr);
 
 /// @brief Supprime le dernier élément du tableau
@@ -70,7 +79,7 @@ void dyn_array_push_back(dyn_array_t *arr, const void* value_ptr);
 /// @note aucun message d'erreur n'est affiché si l'array est vide
 void dyn_array_pop_back(dyn_array_t *arr);
 
-/// @brief Insère un élément à l'index donné
+/// @brief Insère une copie de l'élément à l'index donné
 /// @param arr Pointeur vers le tableau dynamique
 /// @param index Index de l'élément à insérer
 /// @param value_ptr Pointeur vers la valeur à insérer

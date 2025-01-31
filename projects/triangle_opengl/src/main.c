@@ -24,11 +24,6 @@ static void print_version();
 
 extern app_config_t APP_CONFIG;
 
-static void print_int(void* value)
-{
-    printf("%d\n", *(int*)value);
-}
-
 int main(void)
 {
     GLFWwindow* window = NULL;

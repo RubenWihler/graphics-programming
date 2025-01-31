@@ -41,8 +41,10 @@ void dyn_array_destroy(dyn_array_t *arr)
     free(arr);
 }
 
-void dyn_array_destory_all(dyn_array_t *arr, void (*destroy_element)(void*))
+void dyn_array_destroy_complex(dyn_array_t *arr, void (*destroy_element)(void*))
 {
+    if(destroy_element == NULL) destroy_element = free;
+
     for(size_t i = 0; i < arr->count; i++)
         destroy_element((char*)arr->data + (i * arr->size));
 
@@ -140,6 +142,20 @@ void dyn_array_remove(dyn_array_t *arr, const size_t index)
     arr->count--;
 
     auto_shrink(arr);
+}
+
+void* dyn_array_reserve(dyn_array_t *arr, const size_t count)
+{
+    if(count == 0) return NULL;
+
+    size_t new_count = arr->count + count;
+    if(new_count > arr->capacity)
+        resize(arr, new_count);
+
+    void *dest = (char*)arr->data + (arr->count * arr->size);
+    arr->count = new_count;
+
+    return dest;
 }
 
 void dyn_array_clear(dyn_array_t *arr)
