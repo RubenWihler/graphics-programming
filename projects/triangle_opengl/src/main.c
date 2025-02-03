@@ -10,13 +10,12 @@
 #include <assert.h>
 
 #include "config/app_config.h"
-#include "shaders/shader_manager.h"
-#include "shaders/shader_parser.h"
 #include "log/log.h"
 
 #include "gl_object/vertex_buffer/vertex_buffer.h"
 #include "gl_object/index_buffer/index_buffer.h"
 #include "gl_object/vertex_array/vertex_array.h"
+#include "gl_object/shader/shader.h"
 
 static int init(app_config_t config, GLFWwindow** window);
 static void print_version();
@@ -67,18 +66,14 @@ int main(void)
     index_buffer_init(&ibo, indices, 2 * 3);
 
     //Chargement des shaders
-    shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
-    unsigned int shader_program_basic = create_shader_program(shader_source_code_basic->vertex, 
-                                                              shader_source_code_basic->fragment);
-    shader_program_source_destroy(shader_source_code_basic);
-
-    //Récupération de l'emplacement de l'uniforme u_color (du fragment shader)
-    int color_location = glGetUniformLocation(shader_program_basic, "u_color");
-    int time_location = glGetUniformLocation(shader_program_basic, "u_time");
-    assert(color_location != -1 && time_location != -1 && "Error while getting uniform location");
+    shader_t shader;
+    shader_init(&shader, "res/shaders/basic");
+    shader_bind(&shader);
+    shader_set_uniform_4f(&shader, "u_color", 0, 0, 0, 0);
+    shader_set_uniform_1f(&shader, "u_time", 0);
 
     //debind tout pour simuler une utilisation de plusieurs buffers
-    glUseProgram(0);
+    shader_unbind(&shader);
     vertex_array_unbind(&vao);
     vertex_buffer_unbind(&vbo);
     index_buffer_unbind(&ibo);
@@ -97,9 +92,9 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         //shaders
-        glUseProgram(shader_program_basic);
-        glUniform4f(color_location, r, 0.2f, 0.9f, 1.0f);
-        glUniform1f(time_location, time);
+        shader_bind(&shader);
+        shader_set_uniform_4f(&shader, "u_color", r, 0.2f, 0.9f, 1.0f);
+        shader_set_uniform_1f(&shader, "u_time", time);
     
         //bind le vao
         glBindVertexArray(vao.renderer_id);
@@ -126,7 +121,7 @@ int main(void)
     }
 
     //On libère la mémoire
-    glDeleteProgram(shader_program_basic);
+    shader_destroy(&shader);
     vertex_buffer_destroy(&vbo);
     index_buffer_destroy(&ibo);
     vertex_array_destroy(&vao);

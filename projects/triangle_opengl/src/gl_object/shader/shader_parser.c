@@ -115,17 +115,3 @@ static char* get_file_content(const char* filepath)
     fclose(file);
     return content;
 }
-
-
-void print_shader_program_source(shader_program_source_t *src)
-{
-    if(!src)
-    {
-        printf("(shader_program_source_t)@{NULL}\n");
-        return;
-    }
-
-    printf("(shader_program_source_t)@{%p}\n", src);
-    printf("vertex:\n%s\n", src->vertex);
-    printf("fragment:\n%s\n", src->fragment);
-}

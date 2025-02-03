@@ -24,11 +24,15 @@
     //Appelle log_gl_clear_errors() automatiquement.
     //Si plusieurs appels OpenGL sont effectués, utiliser ASSERT_GL.
     #define ASSERT_GL_CALL(func) log_gl_clear_errors(); func; log_gl_error_all(#func, __FILE__, __LINE__, true);
+
+    #define LOG_ERROR(msg, interrupt) log_error(msg, __func__, __FILE__, __LINE__, interrupt)
+
 #else
     #define ASSERT_GL_BEGIN() ;
     #define ASSERT_GL_ERROR_OCCURED(msg) 0
     #define ASSERT_GL(msg) ;
     #define ASSERT_GL_CALL(func) func
+    #define LOG_ERROR(msg, interrupt) ;
 #endif
 
 void log_error(char* msg, const char* func, const char* file, const int line, bool interrupt);

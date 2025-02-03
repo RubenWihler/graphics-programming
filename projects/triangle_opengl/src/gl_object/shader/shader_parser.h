@@ -15,6 +15,3 @@ shader_program_source_t* shader_program_source_parse(const char* dirpath);
 /// @brief Libère la mémoire allouée par shader_program_source_parse
 /// @param src Pointeur vers la structure à libérer
 void shader_program_source_destroy(shader_program_source_t* src);
-
-/// @brief Affiche le contenu de la structure shader_program_source_t
-void print_shader_program_source(shader_program_source_t *src);
