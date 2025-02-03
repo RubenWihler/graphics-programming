@@ -25,9 +25,9 @@ void index_buffer_destroy(index_buffer_t *ib);
 /// @brief Bind le index buffer
 /// @param ib Pointeur vers le index buffer à bind
 /// @note bind dans le slot GL_ELEMENT_ARRAY_BUFFER du VAO courant
-void index_buffer_bind(index_buffer_t *ib);
+void index_buffer_bind(const index_buffer_t *ib);
 
 /// @brief Unbind le index buffer si il est bind
 /// @param ib Pointeur vers le index buffer à unbind
 /// @note bind 0 dans le slot GL_ELEMENT_ARRAY_BUFFER du VAO courant
-void index_buffer_unbind(index_buffer_t *ib);
+void index_buffer_unbind(const index_buffer_t *ib);

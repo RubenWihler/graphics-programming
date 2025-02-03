@@ -23,9 +23,9 @@ void vertex_buffer_destroy(vertex_buffer_t *vb);
 /// @brief Bind le vertex buffer 
 /// @param vb Pointeur vers le vertex buffer à bind
 /// @note bind dans le slot GL_ARRAY_BUFFER du VAO courant
-void vertex_buffer_bind(vertex_buffer_t *vb);
+void vertex_buffer_bind(const vertex_buffer_t *vb);
 
 /// @brief Unbind le vertex buffer si il est bind
 /// @param vb Pointeur vers le vertex buffer à unbind
 /// @note bind 0 dans le slot GL_ARRAY_BUFFER du VAO courant
-void vertex_buffer_unbind(vertex_buffer_t *vb);
+void vertex_buffer_unbind(const vertex_buffer_t *vb);

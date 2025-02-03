@@ -31,12 +31,12 @@ void vertex_buffer_destroy(vertex_buffer_t *vb)
     vb->renderer_id = 0;
 }
 
-void vertex_buffer_bind(vertex_buffer_t *vb)
+void vertex_buffer_bind(const vertex_buffer_t *vb)
 {
     ASSERT_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vb->renderer_id));
 }
 
-void vertex_buffer_unbind(vertex_buffer_t *vb)
+void vertex_buffer_unbind(const vertex_buffer_t *vb)
 {   
     assert(vb);
 

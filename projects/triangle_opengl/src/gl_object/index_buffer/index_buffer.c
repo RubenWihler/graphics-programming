@@ -32,12 +32,12 @@ void index_buffer_destroy(index_buffer_t *ib)
     ib->renderer_id = 0;
 }
 
-void index_buffer_bind(index_buffer_t *ib)
+void index_buffer_bind(const index_buffer_t *ib)
 {
     ASSERT_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib->renderer_id));
 }
 
-void index_buffer_unbind(index_buffer_t *ib)
+void index_buffer_unbind(const index_buffer_t *ib)
 {
     assert(ib);
 

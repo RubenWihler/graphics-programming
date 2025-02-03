@@ -16,8 +16,7 @@
 
 #include "gl_object/vertex_buffer/vertex_buffer.h"
 #include "gl_object/index_buffer/index_buffer.h"
-
-#include "utils/dynamic_array/dyn_array.h"
+#include "gl_object/vertex_array/vertex_array.h"
 
 static int init(app_config_t config, GLFWwindow** window);
 static void print_version();
@@ -49,25 +48,28 @@ int main(void)
     };
 
     //Création d'un vertex array object
-    unsigned int vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    vertex_array_t vao;
+    vertex_array_init(&vao);
 
+    //Création d'un vertex buffer object
     vertex_buffer_t vbo;
     vertex_buffer_init(&vbo, positions, 4 * 2 * sizeof(float));
-
-    //Attribut pour les vertex.
-    //Attribut 0: position
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(*positions), 0);
-    glEnableVertexAttribArray(0); // on active cette attribut
     
+    //Création d'un vertex buffer layout
+    vertex_buffer_layout_t layout;
+    vertex_buffer_layout_init(&layout);
+    vertex_buffer_layout_push_float(&layout, 2);
+
+    vertex_array_add_buffer(&vao, &vbo, &layout);
+
     ///Création d'un index buffer object
     index_buffer_t ibo;
     index_buffer_init(&ibo, indices, 2 * 3);
 
     //Chargement des shaders
     shader_program_source_t* shader_source_code_basic = shader_program_source_parse("res/shaders/basic");
-    unsigned int shader_program_basic = create_shader_program(shader_source_code_basic->vertex, shader_source_code_basic->fragment);
+    unsigned int shader_program_basic = create_shader_program(shader_source_code_basic->vertex, 
+                                                              shader_source_code_basic->fragment);
     shader_program_source_destroy(shader_source_code_basic);
 
     //Récupération de l'emplacement de l'uniforme u_color (du fragment shader)
@@ -77,7 +79,7 @@ int main(void)
 
     //debind tout pour simuler une utilisation de plusieurs buffers
     glUseProgram(0);
-    glBindVertexArray(0);
+    vertex_array_unbind(&vao);
     vertex_buffer_unbind(&vbo);
     index_buffer_unbind(&ibo);
 
@@ -98,9 +100,9 @@ int main(void)
         glUseProgram(shader_program_basic);
         glUniform4f(color_location, r, 0.2f, 0.9f, 1.0f);
         glUniform1f(time_location, time);
-
-        //bind notre VAO (qui contient: le vertex buffer, l'index buffer et les attributs)
-        glBindVertexArray(vao);
+    
+        //bind le vao
+        glBindVertexArray(vao.renderer_id);
 
         //draw call
         ASSERT_GL_CALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
@@ -127,7 +129,7 @@ int main(void)
     glDeleteProgram(shader_program_basic);
     vertex_buffer_destroy(&vbo);
     index_buffer_destroy(&ibo);
-    glDeleteVertexArrays(1, &vao);
+    vertex_array_destroy(&vao);
     glfwTerminate();
 
     return 0;
