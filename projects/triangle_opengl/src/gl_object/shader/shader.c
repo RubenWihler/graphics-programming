@@ -23,10 +23,10 @@ bool shader_init(shader_t *shader, const char* dirpath)
         LOG_ERROR("Cannot allocate memory for shader dirpath", true);
         return false;
     }
-    
+
     //copie le chemin du shader
     strcpy(shader->dirpath, dirpath);
-    
+
     //build le shader
     if(!shader_build(shader))
     {
@@ -34,12 +34,18 @@ bool shader_init(shader_t *shader, const char* dirpath)
         return false;
     }
 
+    //initialise la hashmap des uniforms
+    shader->uniforms = hashmap_create(16, HASH_FUNC_DJB2, sizeof(char*), sizeof(int));
+    hashmap_set_fn_compare(shader->uniforms, HASHMAP_COMPARE_STRING);
+    hashmap_set_fn_alloc_copy_key(shader->uniforms, HASHMAP_ALLOC_COPY_STRING);
+
     return true;
 }
 
 void shader_destroy(shader_t *shader)
 {
     ASSERT_GL_CALL(glDeleteProgram(shader->renderer_id));
+    hashmap_destroy(shader->uniforms);
 }
 
 void shader_bind(const shader_t *shader)
@@ -62,11 +68,20 @@ void shader_set_uniform_1f(const shader_t *shader, const char* name, float v0)
     ASSERT_GL_CALL(glUniform1f(shader_get_uniform_location(shader, name), v0));
 }
 
+static void print_int(const void *data)
+{
+    printf("%d", *(int*)data);
+}
+
 static int shader_get_uniform_location(const shader_t *shader, const char* name)
 {
+    int *location_ptr = hashmap_get(shader->uniforms, name);
+    if(location_ptr) return *location_ptr;
+
     int location = glGetUniformLocation(shader->renderer_id, name);
     if(location == -1) LOG_ERROR("Cannot find uniform location", false);
 
+    hashmap_add(shader->uniforms, name, &location);    
     return location;
 }
 
@@ -84,10 +99,10 @@ static bool shader_build(shader_t *shader)
     shader->renderer_id = shader_create_program(src->vertex, src->fragment);
     if(shader->renderer_id == 0)
     {
-        LOG_ERROR("Cannot create shader program", false);
+        LOG_ERROR("Cannot parse shader program source", false);
         return false;
     }
-    
+
     //libere la memoire des sources
     shader_program_source_destroy(src);
 
@@ -99,7 +114,7 @@ static unsigned int shader_create_program(const char* vertex_src, const char* fr
     unsigned int program = glCreateProgram();
     unsigned int vs = shader_compile(GL_VERTEX_SHADER, vertex_src);
     unsigned int fs = shader_compile(GL_FRAGMENT_SHADER, fragment_src);
-    
+
     if(vs == 0 || fs == 0)
     {
         LOG_ERROR("Cannot create shader program due to a compilation error!", false);
@@ -119,23 +134,22 @@ static unsigned int shader_create_program(const char* vertex_src, const char* fr
 
 static unsigned int shader_compile(const unsigned int type, const char* source)
 {
-    
     const char *src = &source[0];
 
     unsigned int id = glCreateShader(type);
     glShaderSource(id, 1, &src, NULL);
     glCompileShader(id);
-    
+
     int status;
     glGetShaderiv(id, GL_COMPILE_STATUS, &status);
     if(status == GL_FALSE)
     {
         int length;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        
+
         char *msg = alloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, NULL, msg);
-        
+
         fprintf(stderr, "Error while compiling %s shader : %s\n", 
                 (type == GL_VERTEX_SHADER) ? "vertex" : "fragment", msg);
 
@@ -145,5 +159,4 @@ static unsigned int shader_compile(const unsigned int type, const char* source)
 
     return id;
 }
-
 

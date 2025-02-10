@@ -1,11 +1,12 @@
 #pragma once
 
+#include "../../utils/hashmap/hashmap.h"
 #include <stdbool.h>
 
 typedef struct _shader_t{
     unsigned int renderer_id;
     char* dirpath;
-    //hashmap_t uniforms;
+    hashmap_t* uniforms;//caching des locations des uniforms
 } shader_t;
 
 bool shader_init(shader_t *shader, const char* dirpath);

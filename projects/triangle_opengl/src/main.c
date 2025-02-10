@@ -53,7 +53,7 @@ int main(void)
     //Création d'un vertex buffer object
     vertex_buffer_t vbo;
     vertex_buffer_init(&vbo, positions, 4 * 2 * sizeof(float));
-    
+
     //Création d'un vertex buffer layout
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
@@ -95,7 +95,7 @@ int main(void)
         shader_bind(&shader);
         shader_set_uniform_4f(&shader, "u_color", r, 0.2f, 0.9f, 1.0f);
         shader_set_uniform_1f(&shader, "u_time", time);
-    
+
         //bind le vao
         glBindVertexArray(vao.renderer_id);
 
@@ -109,13 +109,13 @@ int main(void)
         //On change le temps pour l'animation
         if(time > 2 * M_PI) time = 0;
         time += time_incr;
-        
+
         //On échange les buffers
         //C'est à dire qu'on affiche le buffer ou l'on a dessiné
         //et on met en attente le buffer ou on va dessiner
         //si la vsync est activée, on attend la fin du rafraichissement de l'écran
         glfwSwapBuffers(window);
-    
+
         //On gère les événements
         glfwPollEvents();
     }
@@ -162,7 +162,7 @@ int init(app_config_t config, GLFWwindow** window)
     // GLEW permet de charger les fonctions OpenGL a partir du driver de la carte graphique
     if (glewInit() != GLEW_OK)
     {
-        fprintf(stderr,"Error while init GLEW: %s\n", glewGetErrorString(glewInit()));
+        fprintf(stderr, "Error while init GLEW: %s\n", glewGetErrorString(glewInit()));
         return -1;
     }
 
