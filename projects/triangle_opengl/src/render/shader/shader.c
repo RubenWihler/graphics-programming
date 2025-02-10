@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static const size_t uniform_cache_initial_capacity = 8;
+
 static bool shader_build(shader_t *shader);
 static unsigned int shader_compile(const unsigned int type, const char* source);
 static unsigned int shader_create_program(const char* vertex_src, const char* fragment_src);
@@ -16,16 +18,9 @@ bool shader_init(shader_t *shader, const char* dirpath)
 {
     memset(shader, 0, sizeof(*shader));
 
-    //alloue la memoire pour le chemin du shader
-    shader->dirpath = malloc(strlen(dirpath) + 1);
-    if(!shader->dirpath)
-    {
-        LOG_ERROR("Cannot allocate memory for shader dirpath", true);
-        return false;
-    }
-
-    //copie le chemin du shader
-    strcpy(shader->dirpath, dirpath);
+    //copie le chemin du répertoire
+    shader->dirpath = strdup(dirpath);
+    if(!shader->dirpath) return (perror("strdup"), false);
 
     //build le shader
     if(!shader_build(shader))
@@ -35,7 +30,9 @@ bool shader_init(shader_t *shader, const char* dirpath)
     }
 
     //initialise la hashmap des uniforms
-    shader->uniforms = hashmap_create(16, HASH_FUNC_DJB2, sizeof(char*), sizeof(int));
+    shader->uniforms = hashmap_create(uniform_cache_initial_capacity, HASH_FUNC_DJB2, 
+                                      sizeof(char*), sizeof(int));
+
     hashmap_set_fn_compare(shader->uniforms, HASHMAP_COMPARE_STRING);
     hashmap_set_fn_alloc_copy_key(shader->uniforms, HASHMAP_ALLOC_COPY_STRING);
 
@@ -58,15 +55,16 @@ void shader_unbind(__attribute__((unused)) const shader_t *shader)
     ASSERT_GL_CALL(glUseProgram(0));
 }
 
-void shader_set_uniform_4f(const shader_t *shader, const char* name, float v0, float v1, float v2, float v3)
-{
-    ASSERT_GL_CALL(glUniform4f(shader_get_uniform_location(shader, name), v0, v1, v2, v3));
-}
+
+void shader_set_uniform_1i(const shader_t *shader, const char* name, int v0)
+{ ASSERT_GL_CALL(glUniform1i(shader_get_uniform_location(shader, name), v0)); }
 
 void shader_set_uniform_1f(const shader_t *shader, const char* name, float v0)
-{
-    ASSERT_GL_CALL(glUniform1f(shader_get_uniform_location(shader, name), v0));
-}
+{ ASSERT_GL_CALL(glUniform1f(shader_get_uniform_location(shader, name), v0)); }
+
+void shader_set_uniform_4f(const shader_t *shader, const char* name, float v0, float v1, float v2, float v3)
+{ ASSERT_GL_CALL(glUniform4f(shader_get_uniform_location(shader, name), v0, v1, v2, v3)); }
+
 
 static int shader_get_uniform_location(const shader_t *shader, const char* name)
 {
@@ -74,7 +72,13 @@ static int shader_get_uniform_location(const shader_t *shader, const char* name)
     if(location_ptr) return *location_ptr;
 
     int location = glGetUniformLocation(shader->renderer_id, name);
-    if(location == -1) LOG_ERROR("Cannot find uniform location", false);
+    if(location == -1)
+    {
+        char errmsg[255];
+        memset(errmsg, 0, 255);
+        sprintf(errmsg, "Cannot find uniform location : %s !", name);
+        LOG_ERROR(errmsg, false);    
+    }
 
     hashmap_add(shader->uniforms, name, &location);    
     return location;
