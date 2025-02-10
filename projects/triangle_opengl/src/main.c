@@ -10,12 +10,12 @@
 #include <assert.h>
 
 #include "config/app_config.h"
-#include "log/log.h"
 
-#include "gl_object/vertex_buffer/vertex_buffer.h"
-#include "gl_object/index_buffer/index_buffer.h"
-#include "gl_object/vertex_array/vertex_array.h"
-#include "gl_object/shader/shader.h"
+#include "render/vertex_buffer/vertex_buffer.h"
+#include "render/index_buffer/index_buffer.h"
+#include "render/vertex_array/vertex_array.h"
+#include "render/shader/shader.h"
+#include "render/renderer/renderer.h"
 
 static int init(app_config_t config, GLFWwindow** window);
 static void print_version();
@@ -96,11 +96,7 @@ int main(void)
         shader_set_uniform_4f(&shader, "u_color", r, 0.2f, 0.9f, 1.0f);
         shader_set_uniform_1f(&shader, "u_time", time);
 
-        //bind le vao
-        glBindVertexArray(vao.renderer_id);
-
-        //draw call
-        ASSERT_GL_CALL(glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, NULL));
+        renderer_draw(NULL, &vao, &ibo, &shader);
 
         //On change la couleur
         if(r > 1 || r < 0) r_incr *= -1;

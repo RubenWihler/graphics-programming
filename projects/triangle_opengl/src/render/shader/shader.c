@@ -53,7 +53,7 @@ void shader_bind(const shader_t *shader)
     ASSERT_GL_CALL(glUseProgram(shader->renderer_id));
 }
 
-void shader_unbind(const shader_t *shader)
+void shader_unbind(__attribute__((unused)) const shader_t *shader)
 {
     ASSERT_GL_CALL(glUseProgram(0));
 }
@@ -66,11 +66,6 @@ void shader_set_uniform_4f(const shader_t *shader, const char* name, float v0, f
 void shader_set_uniform_1f(const shader_t *shader, const char* name, float v0)
 {
     ASSERT_GL_CALL(glUniform1f(shader_get_uniform_location(shader, name), v0));
-}
-
-static void print_int(const void *data)
-{
-    printf("%d", *(int*)data);
 }
 
 static int shader_get_uniform_location(const shader_t *shader, const char* name)
