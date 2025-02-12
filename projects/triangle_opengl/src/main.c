@@ -4,12 +4,16 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "vendor/cglm/cam.h"
+#include "vendor/cglm/cglm.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
 
 #include "config/app_config.h"
+#include "utils/crypto/math_utils.h"
 
 #include "render/vertex_buffer/vertex_buffer.h"
 #include "render/index_buffer/index_buffer.h"
@@ -23,6 +27,8 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 static void print_version();
 
 extern app_config_t APP_CONFIG;
+
+shader_t *tmp_shader = NULL;
 
 int main(void)
 {
@@ -72,12 +78,17 @@ int main(void)
     index_buffer_t ibo;
     index_buffer_init(&ibo, indices, 2 * 3);
 
+    mat4 proj = GLM_MAT4_IDENTITY_INIT;
+    glm_ortho(-4.0f, 4.0f, -4.5f, 4.5f, -1.0f, 1.0f, proj);
+
     //Chargement des shaders
     shader_t shader;
     shader_init(&shader, "res/shaders/shiny_image");
     shader_bind(&shader);
     shader_set_uniform_4f(&shader, "u_color", 0.35f, 0.2f, 0.6f, 0);
     shader_set_uniform_1f(&shader, "u_time", 0);
+    shader_set_uniform_mat4(&shader, "u_mvp", proj);
+    tmp_shader = &shader;
 
     texture_t texture;
     texture_init(&texture, "res/textures/c_logo.png");
@@ -185,5 +196,22 @@ void print_version()
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
+    (void)window;
     glViewport(0, 0, width, height);
+    
+    if(tmp_shader == NULL) return;
+
+    /*
+        * On veut que l'image soit toujours de la même taille
+        * Pour cela on va calculer le ratio de l'image
+        * et on va adapter la taille de l'image en fonction de la taille de la fenêtre
+    */
+    
+    float ratio = (float)width / (float)height;
+    float sw = 4.0f;
+    float sh = sw / ratio;
+
+    mat4 proj = GLM_MAT4_IDENTITY_INIT;
+    glm_ortho(-sw, sw, -sh, sh, -1.0f, 1.0f, proj);
+    shader_set_uniform_mat4(tmp_shader, "u_mvp", proj);
 }
