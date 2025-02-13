@@ -5,7 +5,7 @@
 #include "vertex_buffer.h"
 #include "../../log/log.h"
 
-bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned int size)
+bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned int size, bool dynamic)
 {
     assert(vb);
     memset(vb, 0, sizeof(*vb));
@@ -14,7 +14,7 @@ bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned in
 
     glGenBuffers(1, &vb->renderer_id);
     glBindBuffer(GL_ARRAY_BUFFER, vb->renderer_id);
-    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
     if (ASSERT_GL_ERROR_OCCURED("error while creating vertex buffer"))
     {
@@ -45,4 +45,10 @@ void vertex_buffer_unbind(const vertex_buffer_t *vb)
 
     if(bound_buffer == vb->renderer_id)
         ASSERT_GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+}
+
+void vertex_buffer_set_data(vertex_buffer_t *vb, const void* data, const unsigned int size)
+{
+    vertex_buffer_bind(vb);
+    ASSERT_GL_CALL(glBufferSubData(GL_ARRAY_BUFFER, 0, size, data));
 }

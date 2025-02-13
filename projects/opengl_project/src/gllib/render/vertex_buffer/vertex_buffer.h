@@ -12,7 +12,7 @@ typedef struct _vertex_buffer_t{
 /// @param size Taille en octets de data (sizeof(type) * nombre d'éléments)
 /// @return true en cas de succès, false en cas d'erreur
 /// @note Le buffer doit être détruit avec vertex_buffer_destroy
-bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned int size);
+bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned int size, bool dynamic);
 
 /// @brief Détruit un vertex buffer
 /// @param vb Pointeur vers le vertex buffer à détruire
@@ -29,3 +29,5 @@ void vertex_buffer_bind(const vertex_buffer_t *vb);
 /// @param vb Pointeur vers le vertex buffer à unbind
 /// @note bind 0 dans le slot GL_ARRAY_BUFFER du VAO courant
 void vertex_buffer_unbind(const vertex_buffer_t *vb);
+
+void vertex_buffer_set_data(vertex_buffer_t *vb, const void* data, const unsigned int size);

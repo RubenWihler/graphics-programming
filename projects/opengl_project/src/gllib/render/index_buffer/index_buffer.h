@@ -14,7 +14,7 @@ typedef struct _index_buffer_t{
 /// @return true en cas de succès, false en cas d'erreur
 /// @note Le buffer doit être détruit avec index_buffer_destroy
 /// @see index_buffer_destroy
-bool index_buffer_init(index_buffer_t *ib, const unsigned int* data, const unsigned int count);
+bool index_buffer_init(index_buffer_t *ib, const unsigned int* data, const unsigned int count, bool dynamic);
 
 /// @brief Détruit un index buffer
 /// @param ib Pointeur vers le index buffer à détruire
@@ -31,3 +31,5 @@ void index_buffer_bind(const index_buffer_t *ib);
 /// @param ib Pointeur vers le index buffer à unbind
 /// @note bind 0 dans le slot GL_ELEMENT_ARRAY_BUFFER du VAO courant
 void index_buffer_unbind(const index_buffer_t *ib);
+
+void index_buffer_set_data(index_buffer_t *ib, const unsigned int* data, const unsigned int count);

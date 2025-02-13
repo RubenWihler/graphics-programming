@@ -13,7 +13,8 @@ bool cam_ortho_init(cam_ortho_t *cam, float left, float right, float bottom, flo
     //position = 0 0 0
     //rotation = 0
     cam->rotation = 0.0f;
-    memcpy(cam->position, GLM_VEC3_ZERO, sizeof(vec3));
+    memcpy(cam->position, &GLM_VEC3_ZERO, sizeof(vec3));
+    memcpy(cam->scale, &GLM_VEC3_ONE, sizeof(vec3));
 
     //initialisation de la matrice de projection
     mat4 proj = GLM_MAT4_IDENTITY_INIT;
@@ -49,11 +50,19 @@ void cam_ortho_set_rotation(cam_ortho_t *cam, float new_rotation)
     recalculate_view_matrix(cam);
 }
 
+void cam_ortho_set_scale(cam_ortho_t *cam, vec3 new_scale)
+{
+    memcpy(cam->scale, new_scale, sizeof(vec3));
+    recalculate_view_matrix(cam);
+}
+
+
 static void recalculate_view_matrix(cam_ortho_t *cam)
 {
     mat4 transform = GLM_MAT4_IDENTITY_INIT;
     glm_translate(transform, cam->position);
     glm_rotate(transform, cam->rotation, (vec3){0.0f, 0.0f, 1.0f});
+    glm_scale(transform, cam->scale);
     glm_mat4_inv(transform, cam->view_matrix);
 
     //proj * view = view_proj 

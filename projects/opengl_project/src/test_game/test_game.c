@@ -22,6 +22,9 @@
 #include "../gllib/render/texture/texture.h"
 #include "../gllib/render/renderer/renderer.h"
 
+#include "../gllib/addons/camera_controller/cam_ortho_controller.h"
+#include "../gllib/addons/background/grid_background.h"
+
 struct _test_game_t {
     game_t game;
     test_game_config_t config;
@@ -29,6 +32,8 @@ struct _test_game_t {
     input_manager_t input_manager;
     renderer_t renderer;
     cam_ortho_t cam;
+    cam_ortho_controller_t cam_controller;
+    grid_background_t grid;
 
     vertex_array_t vao;
     vertex_buffer_t vbo;
@@ -51,8 +56,7 @@ static void test_game_render(game_t *game);
 static void test_game_clean(game_t *game);
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-
-static void update_camera_position(cam_ortho_t *cam, input_manager_t *input_manager, float delta_time);
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 game_t* test_game_create(test_game_config_t config)
 {
@@ -94,7 +98,7 @@ static bool test_game_init(game_t *game, game_api_t api)
     game->api.glfw_callbacks.key_callback = NULL;
     game->api.glfw_callbacks.mouse_button_callback = NULL;
     game->api.glfw_callbacks.cursor_position_callback = NULL;
-    game->api.glfw_callbacks.scroll_callback = NULL;
+    game->api.glfw_callbacks.scroll_callback = scroll_callback;
 
     test_game_t *tg = (test_game_t*)game;
 
@@ -115,9 +119,25 @@ static bool test_game_init(game_t *game, game_api_t api)
     //camera
     int winw, winh;
     glfwGetWindowSize(game->window, &winw, &winh);
-    if (!cam_ortho_init(&tg->cam, 0.0f, winw, 0.0f, winh))
+    if(!cam_ortho_init(&tg->cam, 0.0f, winw, 0.0f, winh))
     {
         LOG_ERROR("camera initialization failed!", true);
+        return false;
+    }
+
+    //camera controller
+    cam_ortho_controller_config_t cam_controller_config = CAM_ORTHO_CONTROLLER_DEFAULT_CONFIG;
+    cam_controller_config.camera_speed = 1000.0f;
+    if(!cam_ortho_controller_init(&tg->cam_controller, &tg->cam, &tg->input_manager, cam_controller_config))
+    {
+        LOG_ERROR("camera controller initialization failed!", true);
+        return false;
+    }
+
+    //grid background
+    if(!grid_background_init(&tg->grid, &tg->cam, &tg->renderer))
+    {
+        LOG_ERROR("grid background initialization failed!", true);
         return false;
     }
 
@@ -148,7 +168,6 @@ static void test_game_start(game_t *game)
         200.0f, 200.0f, 1.0f, 1.0f, // vertex 2
         100.0f, 200.0f, 0.0f, 1.0f, // vertex 3
 
-
         400.0f, 400.0f, 0.0f, 0.0f, // vertex 0
         600.0f, 400.0f, 1.0f, 0.0f, // vertex 1
         600.0f, 600.0f, 1.0f, 1.0f, // vertex 2
@@ -164,7 +183,7 @@ static void test_game_start(game_t *game)
     };
     
     vertex_array_init(&tg->vao);
-    vertex_buffer_init(&tg->vbo, vertex, 4 * 8 * sizeof(float));
+    vertex_buffer_init(&tg->vbo, vertex, 4 * 8 * sizeof(float), false);
     
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
@@ -172,7 +191,7 @@ static void test_game_start(game_t *game)
     vertex_buffer_layout_push_float(&layout, 2);//tex
     vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
 
-    index_buffer_init(&tg->ibo, indices, 12);
+    index_buffer_init(&tg->ibo, indices, 12, false);
     index_buffer_bind(&tg->ibo);
 
     texture_init(&tg->texture, "res/textures/c_logo.png");
@@ -204,7 +223,7 @@ static void test_game_update(game_t *game, float delta_time)
 {
     test_game_t *tg = (test_game_t*)game;
 
-    update_camera_position(&tg->cam, &tg->input_manager, delta_time);
+    cam_ortho_controller_update(&tg->cam_controller, delta_time);
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -215,6 +234,8 @@ static void test_game_render(game_t *game)
 {
     test_game_t *tg = (test_game_t*)game;
     
+    grid_background_render(&tg->grid);
+
     renderer_begin_scene(&tg->renderer, &tg->cam);
     
     shader_bind(&tg->shader);
@@ -236,6 +257,7 @@ static void test_game_clean(game_t *game)
 
     renderer_destroy(&tg->renderer);
     cam_ortho_destroy(&tg->cam);
+    cam_ortho_controller_destroy(&tg->cam_controller);
 }
 
 
@@ -244,41 +266,11 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
 
-    cam_ortho_set_viewport(&tg->cam, 0.0f, width, 0.0f, height);
+    cam_ortho_controller_resize_viewport(&tg->cam_controller, width, height);
 }
 
-static void update_camera_position(cam_ortho_t *cam, input_manager_t *input_manager, float delta_time)
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    //en attendant de mettre dans la config
-    static const int UP_KEY     = GLFW_KEY_W;
-    static const int LEFT_KEY   = GLFW_KEY_A;
-    static const int DOWN_KEY   = GLFW_KEY_S;
-    static const int RIGHT_KEY  = GLFW_KEY_D;
-    static const float CAMERA_SPEED = 300;
-
-    vec3 move = GLM_VEC3_ZERO_INIT;
-    
-    if(input_manager_is_key_pressed(input_manager, UP_KEY))
-        glm_vec3_add(move, (vec3){0, 1, 0}, move);
-
-    if(input_manager_is_key_pressed(input_manager, LEFT_KEY))
-        glm_vec3_add(move, (vec3){-1, 0, 0}, move);
-
-    if(input_manager_is_key_pressed(input_manager, DOWN_KEY))
-        glm_vec3_add(move, (vec3){0, -1, 0}, move);
-
-    if(input_manager_is_key_pressed(input_manager, RIGHT_KEY))
-        glm_vec3_add(move, (vec3){1, 0, 0}, move);
-
-    //si on a pas bouger
-    if(glm_vec3_eqv_eps(move, GLM_VEC3_ZERO)) return;
-
-    //normalise le vecteur et multiplie par vitesse * delta time
-    glm_vec3_normalize(move);
-    glm_vec3_scale(move, CAMERA_SPEED * delta_time, move);
-    
-    //modifie la position de la camera
-    glm_vec3_add(cam->position, move, move);
-    cam_ortho_set_position(cam, move);
+    test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
+    cam_ortho_controller_zoom(&tg->cam_controller, yoffset);
 }
-
