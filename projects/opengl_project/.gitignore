@@ -6,7 +6,7 @@
 **/*.null-ls*
 
 # Ignore object files in /obj/
-obj/*.o
+obj
 
 # Ignore binary files in /bin/
-bin/*
+bin
