@@ -13,6 +13,7 @@
 
 #include "../gllib/log/log.h"
 #include "../gllib/game/game.h"
+#include "../gllib/render/camera/cam_ortho.h"
 #include "../gllib/render/vertex_buffer/vertex_buffer.h"
 #include "../gllib/render/index_buffer/index_buffer.h"
 #include "../gllib/render/vertex_array/vertex_array.h"
@@ -24,6 +25,9 @@ struct _test_game_t {
     game_t game;
     test_game_config_t config;
 
+    renderer_t renderer;
+    cam_ortho_t cam;
+
     vertex_array_t vao;
     vertex_buffer_t vbo;
     index_buffer_t ibo;
@@ -32,9 +36,7 @@ struct _test_game_t {
     float time;
     float time_incr;
 
-    mat4 *model;//car que 1 obj pour l'instant
-    mat4 *view;
-    mat4 *proj;
+    //mat4 *model;//car que 1 obj pour l'instant
 };
 
 static bool test_game_init(game_t *game, game_api_t api);
@@ -90,6 +92,26 @@ static bool test_game_init(game_t *game, game_api_t api)
     game->api.glfw_callbacks.cursor_position_callback = NULL;
     game->api.glfw_callbacks.scroll_callback = NULL;
 
+    test_game_t *tg = (test_game_t*)game;
+
+    if(!renderer_init(&tg->renderer, 0))
+    {
+        LOG_ERROR("renderer initialization failed!", true);
+        return false;
+    }
+
+    //camera
+    int winw, winh;
+    glfwGetWindowSize(game->window, &winw, &winh);
+    if (!cam_ortho_init(&tg->cam, 0.0f, winw, 0.0f, winh))
+    {
+        LOG_ERROR("camera initialization failed!", true);
+        return false;
+    }
+
+    tg->time = 0.0f;
+    tg->time_incr = 0.1f;
+
     return true;
 }
 
@@ -99,34 +121,38 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = (test_game_t*)game;
 
-    //matrices - Model View Projection (MVP)
-    mat4 identity = GLM_MAT4_IDENTITY_INIT;
-    tg->model = (mat4*)malloc(sizeof(mat4));
-    tg->view = (mat4*)malloc(sizeof(mat4));
-    tg->proj = (mat4*)malloc(sizeof(mat4));
-    memcpy(*tg->model, identity, sizeof(mat4));
-    memcpy(*tg->view,  identity, sizeof(mat4));
-    memcpy(*tg->proj,  identity, sizeof(mat4));
-    
-    glm_ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, *tg->proj);
-    glm_translate(*tg->view, (vec3){0.0f, 0.0f, 0.0f});
-    glm_translate(*tg->model, (vec3){0.0f, 0.0f, 0.0f});
+    /* const float vertex[] = { */
+    /* // |     pos    |    tex    | */
+    /*     -0.5f, -0.5f, 0.0f, 0.0f, // vertex 0 */
+    /*      0.5f, -0.5f, 1.0f, 0.0f, // vertex 1 */
+    /*      0.5f,  0.5f, 1.0f, 1.0f, // vertex 2 */
+    /*     -0.5f,  0.5f, 0.0f, 1.0f, // vertex 3 */
+    /* }; */
 
     const float vertex[] = {
     // |     pos    |    tex    |
-        -0.5f, -0.5f, 0.0f, 0.0f, // vertex 0
-         0.5f, -0.5f, 1.0f, 0.0f, // vertex 1
-         0.5f,  0.5f, 1.0f, 1.0f, // vertex 2
-        -0.5f,  0.5f, 0.0f, 1.0f, // vertex 3
+        100.0f, 100.0f, 0.0f, 0.0f, // vertex 0
+        200.0f, 100.0f, 1.0f, 0.0f, // vertex 1
+        200.0f, 200.0f, 1.0f, 1.0f, // vertex 2
+        100.0f, 200.0f, 0.0f, 1.0f, // vertex 3
+
+
+        400.0f, 400.0f, 0.0f, 0.0f, // vertex 0
+        600.0f, 400.0f, 1.0f, 0.0f, // vertex 1
+        600.0f, 600.0f, 1.0f, 1.0f, // vertex 2
+        400.0f, 600.0f, 0.0f, 1.0f, // vertex 3
     };
 
     const unsigned int indices[] = {
         0, 1, 2, //1er  triangle
         0, 2, 3, //2eme triangle
+
+        4, 5, 6, //1er  triangle
+        4, 6, 7, //2eme triangle
     };
     
     vertex_array_init(&tg->vao);
-    vertex_buffer_init(&tg->vbo, vertex, 4 * 4 * sizeof(float));
+    vertex_buffer_init(&tg->vbo, vertex, 4 * 8 * sizeof(float));
     
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
@@ -134,20 +160,17 @@ static void test_game_start(game_t *game)
     vertex_buffer_layout_push_float(&layout, 2);//tex
     vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
 
-    index_buffer_init(&tg->ibo, indices, 6 * sizeof(unsigned int));
+    index_buffer_init(&tg->ibo, indices, 12);
     index_buffer_bind(&tg->ibo);
 
     texture_init(&tg->texture, "res/textures/c_logo.png");
     texture_bind(&tg->texture, &(uint){0});
-    shader_init(&tg->shader, "res/shaders/shiny_image");
+    shader_init(&tg->shader, "res/shaders/shiny_2d_tex");
     shader_bind(&tg->shader);
     shader_set_uniform_1i(&tg->shader, "u_texture", 0);
     shader_set_uniform_4f(&tg->shader, "u_color", 0.35f, 0.2f, 0.6f, 0.0f);
-    shader_set_uniform_mat4(&tg->shader, "u_mvp", *tg->proj);
+    shader_set_uniform_mat4(&tg->shader, "u_view_proj", tg->cam.view_projection_matrix);
     shader_set_uniform_1f(&tg->shader, "u_time", 0);
-
-    tg->time = 0.0f;
-    tg->time_incr = 0.1f;
 }
 
 static void test_game_stop(game_t *game)
@@ -183,34 +206,34 @@ static void test_game_render(game_t *game)
 {
     test_game_t *tg = (test_game_t*)game;
     
-    mat4 mvp = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_mul(*tg->proj, *tg->view, mvp);
-    glm_mat4_mul(mvp, *tg->model, mvp);
+    renderer_begin_scene(&tg->renderer, &tg->cam);
     
     shader_bind(&tg->shader);
     shader_set_uniform_1f(&tg->shader, "u_time", tg->time);
-    shader_set_uniform_mat4(&tg->shader, "u_mvp", mvp);
+    renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
-    renderer_draw(NULL, &tg->vao, &tg->ibo, &tg->shader);
+    renderer_end_scene(&tg->renderer);
 }
 
 static void test_game_clean(game_t *game)
 {
     test_game_t *tg = (test_game_t*)game;
 
-    free(tg->model);
-    free(tg->view);
-    free(tg->proj);
-
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
     index_buffer_destroy(&tg->ibo);
     vertex_buffer_destroy(&tg->vbo);
     vertex_array_destroy(&tg->vao);
+
+    renderer_destroy(&tg->renderer);
+    cam_ortho_destroy(&tg->cam);
 }
 
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
+    test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
+
+    cam_ortho_set_viewport(&tg->cam, 0.0f, width, 0.0f, height);
 }

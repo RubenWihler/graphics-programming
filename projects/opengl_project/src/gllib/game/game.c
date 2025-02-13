@@ -1,12 +1,14 @@
 #include "game.h"
 #include "../log/log.h"
 
+#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 static bool gl_init(game_t* game);
+static bool callback_init(game_t* game);
 static void loop(game_t* game);
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -31,6 +33,16 @@ int game_init(game_t *game, game_config_t config, game_init_fn init_fn){
     if(!init_fn(game, game->api))
     {
         LOG_ERROR("child game initialization failed!", true);
+        game_clean(game);
+        return false;
+    }
+
+    //initialisation des callbacks
+    //on doit initialiser les callbacks après l'initialisation du jeu enfant
+    //car c'est dans l'initialisation du jeu enfant que l'on définit les callbacks
+    if(!callback_init(game))
+    {
+        LOG_ERROR("callback initialization failed!", true);
         game_clean(game);
         return false;
     }
@@ -132,6 +144,10 @@ static bool gl_init(game_t* game)
         return false;
     }
     
+    //defini le pointeur de la fenêtre pour les callback
+    //on peut ainsi utiliser glfwGetWindowUserPointer pour récupérer le pointeur du jeu
+    glfwSetWindowUserPointer(game->window, (void*)game);
+
     //limitation de la framerate
     if(game->config.fps > 0)
     {
@@ -149,26 +165,6 @@ static bool gl_init(game_t* game)
         glBlendFunc(game->config.blending.src, game->config.blending.dst);
         glEnable(GL_BLEND);
     }
-
-    //callback pour le redimensionnement de la fenêtre
-    if(game->api.glfw_callbacks.framebuffer_size_callback)
-        glfwSetFramebufferSizeCallback(game->window, game->api.glfw_callbacks.framebuffer_size_callback);
-    
-    //callback pour les touches
-    if(game->api.glfw_callbacks.key_callback)
-        glfwSetKeyCallback(game->window, game->api.glfw_callbacks.key_callback);
-
-    //callback pour les boutons de la souris
-    if(game->api.glfw_callbacks.mouse_button_callback)
-        glfwSetMouseButtonCallback(game->window, game->api.glfw_callbacks.mouse_button_callback);
-
-    //callback pour la position du curseur
-    if(game->api.glfw_callbacks.cursor_position_callback)
-        glfwSetCursorPosCallback(game->window, game->api.glfw_callbacks.cursor_position_callback);
-
-    //callback pour la molette de la souris
-    if(game->api.glfw_callbacks.scroll_callback)
-        glfwSetScrollCallback(game->window, game->api.glfw_callbacks.scroll_callback);
 
     return true;
 }
@@ -208,4 +204,29 @@ static void loop(game_t* game)
     //mais ce c'est pas grave car on verifie l'etat dans game_stop
     game_stop(game);
 
+}
+
+static bool callback_init(game_t* game)
+{
+    //callback pour le redimensionnement de la fenêtre
+    if(game->api.glfw_callbacks.framebuffer_size_callback)
+        glfwSetFramebufferSizeCallback(game->window, game->api.glfw_callbacks.framebuffer_size_callback);
+    
+    //callback pour les touches
+    if(game->api.glfw_callbacks.key_callback)
+        glfwSetKeyCallback(game->window, game->api.glfw_callbacks.key_callback);
+
+    //callback pour les boutons de la souris
+    if(game->api.glfw_callbacks.mouse_button_callback)
+        glfwSetMouseButtonCallback(game->window, game->api.glfw_callbacks.mouse_button_callback);
+
+    //callback pour la position du curseur
+    if(game->api.glfw_callbacks.cursor_position_callback)
+        glfwSetCursorPosCallback(game->window, game->api.glfw_callbacks.cursor_position_callback);
+
+    //callback pour la molette de la souris
+    if(game->api.glfw_callbacks.scroll_callback)
+        glfwSetScrollCallback(game->window, game->api.glfw_callbacks.scroll_callback);
+
+    return true;
 }
