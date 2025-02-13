@@ -14,6 +14,7 @@
 #include "../gllib/log/log.h"
 #include "../gllib/game/game.h"
 #include "../gllib/render/camera/cam_ortho.h"
+#include "../gllib/inputs/input_manager.h"
 #include "../gllib/render/vertex_buffer/vertex_buffer.h"
 #include "../gllib/render/index_buffer/index_buffer.h"
 #include "../gllib/render/vertex_array/vertex_array.h"
@@ -25,6 +26,7 @@ struct _test_game_t {
     game_t game;
     test_game_config_t config;
 
+    input_manager_t input_manager;
     renderer_t renderer;
     cam_ortho_t cam;
 
@@ -49,6 +51,8 @@ static void test_game_render(game_t *game);
 static void test_game_clean(game_t *game);
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+
+static void update_camera_position(cam_ortho_t *cam, input_manager_t *input_manager, float delta_time);
 
 game_t* test_game_create(test_game_config_t config)
 {
@@ -94,6 +98,14 @@ static bool test_game_init(game_t *game, game_api_t api)
 
     test_game_t *tg = (test_game_t*)game;
 
+    //input manager
+    if(!input_manager_init(&tg->input_manager, game->window))
+    {
+        LOG_ERROR("input manager initialization failed!", true);
+        return false;
+    }
+    
+    //renderer
     if(!renderer_init(&tg->renderer, 0))
     {
         LOG_ERROR("renderer initialization failed!", true);
@@ -192,14 +204,11 @@ static void test_game_update(game_t *game, float delta_time)
 {
     test_game_t *tg = (test_game_t*)game;
 
+    update_camera_position(&tg->cam, &tg->input_manager, delta_time);
+
+    //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
     tg->time += tg->time_incr;
-    
-    glfwGetWindowSize(game->window, &game->config.width, &game->config.height);
-
-    /* mat4 proj = GLM_MAT4_IDENTITY_INIT; */
-    /* glm_ortho(0.0f, game->config.width, 0.0f, game->config.height, -1.0f, 1.0f, proj); */
-    /* memcpy(*tg->proj, proj, sizeof(mat4)); */
 }
 
 static void test_game_render(game_t *game)
@@ -237,3 +246,39 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
     cam_ortho_set_viewport(&tg->cam, 0.0f, width, 0.0f, height);
 }
+
+static void update_camera_position(cam_ortho_t *cam, input_manager_t *input_manager, float delta_time)
+{
+    //en attendant de mettre dans la config
+    static const int UP_KEY     = GLFW_KEY_W;
+    static const int LEFT_KEY   = GLFW_KEY_A;
+    static const int DOWN_KEY   = GLFW_KEY_S;
+    static const int RIGHT_KEY  = GLFW_KEY_D;
+    static const float CAMERA_SPEED = 300;
+
+    vec3 move = GLM_VEC3_ZERO_INIT;
+    
+    if(input_manager_is_key_pressed(input_manager, UP_KEY))
+        glm_vec3_add(move, (vec3){0, 1, 0}, move);
+
+    if(input_manager_is_key_pressed(input_manager, LEFT_KEY))
+        glm_vec3_add(move, (vec3){-1, 0, 0}, move);
+
+    if(input_manager_is_key_pressed(input_manager, DOWN_KEY))
+        glm_vec3_add(move, (vec3){0, -1, 0}, move);
+
+    if(input_manager_is_key_pressed(input_manager, RIGHT_KEY))
+        glm_vec3_add(move, (vec3){1, 0, 0}, move);
+
+    //si on a pas bouger
+    if(glm_vec3_eqv_eps(move, GLM_VEC3_ZERO)) return;
+
+    //normalise le vecteur et multiplie par vitesse * delta time
+    glm_vec3_normalize(move);
+    glm_vec3_scale(move, CAMERA_SPEED * delta_time, move);
+    
+    //modifie la position de la camera
+    glm_vec3_add(cam->position, move, move);
+    cam_ortho_set_position(cam, move);
+}
+
