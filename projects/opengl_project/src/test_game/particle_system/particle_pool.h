@@ -1,0 +1,41 @@
+#pragma once
+
+typedef unsigned long size_t;
+
+#include "particle_props.h"
+#include "particle.h"
+
+#include "../../gllib/utils/dynamic_array/dyn_array.h"
+
+#include "../../gllib/render/renderer/renderer.h"
+#include "../../gllib/render/camera/cam_ortho.h"
+#include "../../gllib/render/vertex_array/vertex_array.h"
+#include "../../gllib/render/vertex_buffer/vertex_buffer.h"
+#include "../../gllib/render/index_buffer/index_buffer.h"
+#include "../../gllib/render/shader/shader.h"
+
+typedef struct {
+    particle_props_t props;
+
+    size_t capacity;
+    size_t index;
+    
+    particle_t *particles;
+
+    //render
+    vertex_array_t va;
+    vertex_buffer_t vb;
+    vertex_buffer_layout_t layout;
+    index_buffer_t ib;
+
+    float *vertices;
+    unsigned int *indices;
+} particle_pool_t;
+
+bool particle_pool_init(particle_pool_t *pool, const particle_props_t props, const size_t capacity);
+void particle_pool_destroy(particle_pool_t *pool);
+
+void particle_pool_update(particle_pool_t *pool, const float delta_time);
+void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const renderer_t *renderer, const cam_ortho_t *cam);
+
+void particle_pool_emit(particle_pool_t *pool, const size_t count, const vec2 pos);

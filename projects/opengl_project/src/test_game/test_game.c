@@ -25,6 +25,8 @@
 #include "../gllib/addons/camera_controller/cam_ortho_controller.h"
 #include "../gllib/addons/background/grid_background.h"
 
+#include "particle_system/particle_pool.h"
+
 struct _test_game_t {
     game_t game;
     test_game_config_t config;
@@ -35,6 +37,9 @@ struct _test_game_t {
     cam_ortho_controller_t cam_controller;
     grid_background_t grid;
 
+    particle_pool_t particle_pool;
+    shader_t particle_shader;
+
     vertex_array_t vao;
     vertex_buffer_t vbo;
     index_buffer_t ibo;
@@ -44,6 +49,21 @@ struct _test_game_t {
     float time_incr;
 
     //mat4 *model;//car que 1 obj pour l'instant
+};
+
+const particle_props_t particle_props = {
+    .vel = {0.0f, 0.0f},
+    .vel_variation = {500.0f, 500.0f},
+    .color_start = {1.0f, 0.0f, 0.0f, 0.5f},
+    .color_end = {0.0f, 0.0f, 1.0f, 0.0f},
+    .color_variation = {0.0f, 0.2f, 0.0f, 1.0f},
+    .rotation = 0.0f,
+    .rotation_variation = 00.0f,
+    .size_start = 20.0f,
+    .size_end = 20.0f,
+    .size_variation = 5.0f,
+    .life_time = 3.0f,
+    .life_time_variation = 0.5f
 };
 
 static bool test_game_init(game_t *game, game_api_t api);
@@ -141,6 +161,13 @@ static bool test_game_init(game_t *game, game_api_t api)
         return false;
     }
 
+    //particle pool
+    if(!particle_pool_init(&tg->particle_pool, particle_props, 1e6))
+    {
+        LOG_ERROR("particle pool initialization failed!", true);
+        return false;
+    }
+    
     tg->time = 0.0f;
     tg->time_incr = 0.1f;
 
@@ -202,6 +229,11 @@ static void test_game_start(game_t *game)
     shader_set_uniform_4f(&tg->shader, "u_color", 0.35f, 0.2f, 0.6f, 0.0f);
     shader_set_uniform_mat4(&tg->shader, "u_view_proj", tg->cam.view_projection_matrix);
     shader_set_uniform_1f(&tg->shader, "u_time", 0);
+
+    //particle shader
+    shader_init(&tg->particle_shader, "res/shaders/particle/flat");
+    shader_bind(&tg->particle_shader);
+    shader_set_uniform_mat4(&tg->particle_shader, "u_view_proj", tg->cam.view_projection_matrix);
 }
 
 static void test_game_stop(game_t *game)
@@ -224,6 +256,22 @@ static void test_game_update(game_t *game, float delta_time)
     test_game_t *tg = (test_game_t*)game;
 
     cam_ortho_controller_update(&tg->cam_controller, delta_time);
+    
+    particle_pool_update(&tg->particle_pool, delta_time);
+    
+    if(input_manager_is_mouse_pressed(&tg->input_manager, GLFW_MOUSE_BUTTON_1))
+    {
+        vec2 mouse_pos = {0};
+        float zoom = tg->cam_controller.zoom;
+        input_manager_get_mouse_pos(&tg->input_manager, mouse_pos);
+        
+        vec2 pos = {mouse_pos[0] * zoom, mouse_pos[1] * zoom};
+
+        pos[1] = (tg->cam.bounds[3] * zoom) - pos[1];
+
+        for(int i = 0; i < 7000; i++)
+            particle_pool_emit(&tg->particle_pool, 10, pos);
+    }
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -241,6 +289,8 @@ static void test_game_render(game_t *game)
     shader_bind(&tg->shader);
     shader_set_uniform_1f(&tg->shader, "u_time", tg->time);
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
+
+    particle_pool_render(&tg->particle_pool, &tg->particle_shader, &tg->renderer, &tg->cam);
 
     renderer_end_scene(&tg->renderer);
 }

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 typedef struct {
+    vec4 bounds;
     vec3 position;
     vec3 scale;
     float rotation;

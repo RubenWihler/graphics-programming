@@ -9,6 +9,11 @@ static void recalculate_view_matrix(cam_ortho_t *cam);
 bool cam_ortho_init(cam_ortho_t *cam, float left, float right, float bottom, float top)
 {
     memset(cam, 0, sizeof(*cam));
+    
+    cam->bounds[0] = left;
+    cam->bounds[1] = right;
+    cam->bounds[2] = bottom;
+    cam->bounds[3] = top;
 
     //position = 0 0 0
     //rotation = 0
@@ -34,6 +39,11 @@ void cam_ortho_destroy(cam_ortho_t *cam)
 
 void cam_ortho_set_viewport(cam_ortho_t *cam, float left, float right, float bottom, float top)
 {
+    cam->bounds[0] = left;
+    cam->bounds[1] = right;
+    cam->bounds[2] = bottom;
+    cam->bounds[3] = top;
+
     glm_ortho(left, right, bottom, top, -1.0f, 1.0f, cam->projection_matrix);
     recalculate_view_matrix(cam);
 }

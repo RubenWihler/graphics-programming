@@ -52,4 +52,6 @@ void index_buffer_set_data(index_buffer_t *ib, const unsigned int* data, const u
 {
     index_buffer_bind(ib);
     ASSERT_GL_CALL(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count * sizeof(unsigned int), data));
+
+    ib->count = count;
 }

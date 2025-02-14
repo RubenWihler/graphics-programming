@@ -17,7 +17,7 @@ typedef struct _renderer_t{
 bool renderer_init(renderer_t *renderer, unsigned int id);
 void renderer_destroy(renderer_t *renderer);
 
-void renderer_begin_scene(renderer_t *renderer, cam_ortho_t *cam);
+void renderer_begin_scene(renderer_t *renderer, const cam_ortho_t *cam);
 void renderer_end_scene(const renderer_t *renderer);
 
 void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao, 
