@@ -14,5 +14,6 @@ typedef struct {
     float size_end;
 
     float rotation;
+    float rotation_speed;
     float lifetime;
 } particle_spawn_props_t;

@@ -36,3 +36,7 @@ void input_manager_get_mouse_pos(input_manager_t *input_manager, vec2 pos)
     pos[1] = (float)y;
 }
 
+void input_manager_set_mouse_pos(input_manager_t *input_manager, vec2 pos)
+{
+    glfwSetCursorPos(input_manager->window, pos[0], pos[1]);
+}

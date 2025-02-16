@@ -16,3 +16,4 @@ bool input_manager_is_key_pressed(input_manager_t *input_manager, int key);
 bool input_manager_is_mouse_pressed(input_manager_t *input_manager, int btn);
 
 void input_manager_get_mouse_pos(input_manager_t *input_manager, vec2 pos);
+void input_manager_set_mouse_pos(input_manager_t *input_manager, vec2 pos);

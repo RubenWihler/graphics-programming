@@ -72,11 +72,8 @@ void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const r
     renderer_draw(renderer, &pool->va, &pool->ib, shader);
 }
 
-void particle_pool_emit(particle_pool_t *pool, const size_t count, const vec2 pos)
+void particle_pool_emit(particle_pool_t *pool, const vec2 pos)
 {
-    //pour l'instant blc de count
-    (void)count;
-
     particle_t *particle = &pool->particles[pool->index];
 
     particle_spawn_props_t props = {0};
@@ -87,8 +84,17 @@ void particle_pool_emit(particle_pool_t *pool, const size_t count, const vec2 po
     props.vel[0] += pool->props.vel_variation[0] * (((float)rand() / RAND_MAX) - 0.5f);
     props.vel[1] += pool->props.vel_variation[1] * (((float)rand() / RAND_MAX) - 0.5f);
     
+    if(pool->props.vel_circular)
+    {
+        float angle = 2 * M_PI * ((float)rand() / RAND_MAX);
+        float vel = glm_vec2_norm(props.vel);
+        props.vel[0] = vel * cos(angle);
+        props.vel[1] = vel * sin(angle);
+    }
+    
     //rotation
     props.rotation = pool->props.rotation + pool->props.rotation_variation * (((float)rand() / RAND_MAX) - 0.5f);
+    props.rotation_speed = pool->props.rotation_speed + pool->props.rotation_speed_variation * (((float)rand() / RAND_MAX) - 0.5f);
 
     //color
     memcpy(props.color_start, pool->props.color_start, sizeof(props.color_start));
@@ -114,7 +120,7 @@ static bool init_render(particle_pool_t *pool)
     //pour le vertex buffer:
     //on batch
     //structure d'un vertex:
-    //[ posx, posy, rotation, size, colorr, colorg, colorb, colora ]
+    //[ posx, posy, size, colorr, colorg, colorb, colora ]
     
     const size_t vertex_buffer_size = VERTEX_PER_PARTICLE * PARTICLE_STRIDE * pool->capacity * sizeof(float);
     const size_t indice_buffer_size = INDICE_PER_PARTICLE * pool->capacity * sizeof(unsigned int);
@@ -131,7 +137,6 @@ static bool init_render(particle_pool_t *pool)
     //layout
     vertex_buffer_layout_init(&pool->layout);
     vertex_buffer_layout_push_float(&pool->layout, 2);//pos
-    vertex_buffer_layout_push_float(&pool->layout, 1);//rotation
     vertex_buffer_layout_push_float(&pool->layout, 1);//size
     vertex_buffer_layout_push_float(&pool->layout, 4);//color
 
@@ -160,15 +165,6 @@ static unsigned int batch(particle_pool_t *pool)
         //vertex
         particle_set_batch_vertex(particle, &pool->vertices[vert_index]);
 
-        //un peu plus explicite
-        /* pool->indices[indice_index + 0] = count * vertex_per_particle + indices[0];//premier triangle */
-        /* pool->indices[indice_index + 1] = count * vertex_per_particle + indices[1]; */
-        /* pool->indices[indice_index + 2] = count * vertex_per_particle + indices[2]; */
-        /* pool->indices[indice_index + 3] = count * vertex_per_particle + indices[3];//deuxieme triangle */
-        /* pool->indices[indice_index + 4] = count * vertex_per_particle + indices[4]; */
-        /* pool->indices[indice_index + 5] = count * vertex_per_particle + indices[5]; */
-
-        //indices
         //on ajoute les indices pour les 2 triangles
         for(size_t i = 0; i < INDICE_PER_PARTICLE; i++)
         {

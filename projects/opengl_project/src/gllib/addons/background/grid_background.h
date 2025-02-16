@@ -17,9 +17,6 @@
 #include "../../render/shader/shader.h"
 
 typedef struct {
-    cam_ortho_t *cam;
-    renderer_t *renderer;
-    
     float *vertices;
     unsigned int *indices;
 
@@ -29,7 +26,7 @@ typedef struct {
     shader_t shader;
 } grid_background_t;
 
-bool grid_background_init(grid_background_t *grid, cam_ortho_t *cam, renderer_t *renderer);
+bool grid_background_init(grid_background_t *grid);
 void grid_background_destroy(grid_background_t *grid);
 
-void grid_background_render(grid_background_t *grid);
+void grid_background_render(grid_background_t *grid, cam_ortho_t *cam, renderer_t *renderer);

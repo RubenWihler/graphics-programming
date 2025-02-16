@@ -6,16 +6,13 @@
 
 static const size_t row_count = 1000;
 static const size_t col_count = 1000;
-static const float square_size = 100.0f;
-static const float gap = 2.0f;
+static const float square_size = 10.0f;
+static const float gap = 0.5f;
 
 static void update_vertex_buffer(grid_background_t *grid);
 
-bool grid_background_init(grid_background_t *grid, cam_ortho_t *cam, renderer_t *renderer)
+bool grid_background_init(grid_background_t *grid)
 {
-    grid->cam = cam;
-    grid->renderer = renderer;
-    
     grid->vertices = (float*)malloc(4 * 2 * row_count * col_count * sizeof(float));
     if(!grid->vertices) return (perror("malloc"), false);
 
@@ -47,28 +44,21 @@ void grid_background_destroy(grid_background_t *grid)
     vertex_buffer_destroy(&grid->vbo);
     index_buffer_destroy(&grid->ibo);
     vertex_array_destroy(&grid->vao);
-
-    grid->cam = NULL;
-    grid->renderer = NULL;
 }
 
-void grid_background_render(grid_background_t *grid)
+void grid_background_render(grid_background_t *grid, cam_ortho_t *cam, renderer_t *renderer)
 {
     glClearColor(BACK_COLOR);
-
-    renderer_begin_scene(grid->renderer, grid->cam);
 
     //on translate de la moitie de la position de la camera
     //pour un effet de parallaxe
     mat4 model = GLM_MAT4_IDENTITY_INIT;
-    glm_translate(model, (vec3){-grid->cam->position[0] / 5.0f, -grid->cam->position[1] / 5.0f, 0.0f});
+    glm_translate(model, (vec3){-cam->position[0] / 5.0f, -cam->position[1] / 5.0f, 0.0f});
 
     shader_bind(&grid->shader);
     shader_set_uniform_mat4(&grid->shader, "u_model", model);
 
-    renderer_draw(grid->renderer, &grid->vao, &grid->ibo, &grid->shader);
-
-    renderer_end_scene(grid->renderer);
+    renderer_draw(renderer, &grid->vao, &grid->ibo, &grid->shader);
 }
 
 static void update_vertex_buffer(grid_background_t *grid)

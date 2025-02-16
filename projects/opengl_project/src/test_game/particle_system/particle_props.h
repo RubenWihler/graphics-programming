@@ -14,11 +14,16 @@ typedef struct {
     float rotation;
     float rotation_variation;
 
+    float rotation_speed;
+    float rotation_speed_variation;
+
     float size_start;
     float size_end;
     float size_variation;
     
     float life_time;
     float life_time_variation;
+
+    bool vel_circular;
 } particle_props_t;
 

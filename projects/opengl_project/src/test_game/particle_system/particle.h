@@ -9,7 +9,7 @@
 //chaque vertex est un coin d'un carre
 //chaque carre est compose de 2 triangles
 //8 float par vertex
-#define PARTICLE_STRIDE 8
+#define PARTICLE_STRIDE 7
 //2 triangle par particule
 #define INDICE_PER_PARTICLE 2 * 3
 //4 vertex par particule (les 4 coins d'un carre)
@@ -28,6 +28,8 @@ struct _particle_t {
     vec4 color_end;
 
     float rotation;
+    float rotation_speed;
+
     float size_begin;
     float size_end;
 

@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "../gllib/vendor/cglm/cam.h"
-#include "../gllib/vendor/cglm/cglm.h"
+#include "../gllib/vendor/cglm/vec2.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,7 +33,6 @@ struct _test_game_t {
 
     input_manager_t input_manager;
     renderer_t renderer;
-    cam_ortho_t cam;
     cam_ortho_controller_t cam_controller;
     grid_background_t grid;
 
@@ -49,21 +48,32 @@ struct _test_game_t {
     float time_incr;
 
     //mat4 *model;//car que 1 obj pour l'instant
+    vec2 last_emission_pos;
+    bool first_click;
 };
 
+const int particle_emmision_rate = 5000;
+const int particle_capacity = 1 << 20;
 const particle_props_t particle_props = {
     .vel = {0.0f, 0.0f},
-    .vel_variation = {500.0f, 500.0f},
-    .color_start = {1.0f, 0.0f, 0.0f, 0.5f},
+    .vel_variation = {50.0f, 50.0f},
+    .vel_circular = true,
+
+    .color_start = {1.0f, 0.3f, 0.0f, 0.5f},
     .color_end = {0.0f, 0.0f, 1.0f, 0.0f},
-    .color_variation = {0.0f, 0.2f, 0.0f, 1.0f},
+    .color_variation = {0.0f, 0.0f, 0.0f, 1.0f},
+
     .rotation = 0.0f,
-    .rotation_variation = 00.0f,
-    .size_start = 20.0f,
-    .size_end = 20.0f,
+    .rotation_variation = 0.0f,
+    .rotation_speed = 0.1f,
+    .rotation_speed_variation = 10.0f,
+
+    .size_start = 1.0f,
+    .size_end = 1.0f,
     .size_variation = 5.0f,
-    .life_time = 3.0f,
-    .life_time_variation = 0.5f
+
+    .life_time = 2.0f,
+    .life_time_variation = 0.0f
 };
 
 static bool test_game_init(game_t *game, game_api_t api);
@@ -136,33 +146,27 @@ static bool test_game_init(game_t *game, game_api_t api)
         return false;
     }
 
-    //camera
+    //camera controller
     int winw, winh;
     glfwGetWindowSize(game->window, &winw, &winh);
-    if(!cam_ortho_init(&tg->cam, 0.0f, winw, 0.0f, winh))
-    {
-        LOG_ERROR("camera initialization failed!", true);
-        return false;
-    }
-
-    //camera controller
+    const float aspect_ratio = (float)winw / (float)winh;
     cam_ortho_controller_config_t cam_controller_config = CAM_ORTHO_CONTROLLER_DEFAULT_CONFIG;
-    cam_controller_config.camera_speed = 1000.0f;
-    if(!cam_ortho_controller_init(&tg->cam_controller, &tg->cam, &tg->input_manager, cam_controller_config))
+    cam_controller_config.enable_rotation = true;
+    if(!cam_ortho_controller_init(&tg->cam_controller, &tg->input_manager, game->window, cam_controller_config, aspect_ratio))
     {
         LOG_ERROR("camera controller initialization failed!", true);
         return false;
     }
 
     //grid background
-    if(!grid_background_init(&tg->grid, &tg->cam, &tg->renderer))
+    if(!grid_background_init(&tg->grid))
     {
         LOG_ERROR("grid background initialization failed!", true);
         return false;
     }
 
     //particle pool
-    if(!particle_pool_init(&tg->particle_pool, particle_props, 1e6))
+    if(!particle_pool_init(&tg->particle_pool, particle_props, particle_capacity))
     {
         LOG_ERROR("particle pool initialization failed!", true);
         return false;
@@ -180,25 +184,17 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = (test_game_t*)game;
 
-    /* const float vertex[] = { */
-    /* // |     pos    |    tex    | */
-    /*     -0.5f, -0.5f, 0.0f, 0.0f, // vertex 0 */
-    /*      0.5f, -0.5f, 1.0f, 0.0f, // vertex 1 */
-    /*      0.5f,  0.5f, 1.0f, 1.0f, // vertex 2 */
-    /*     -0.5f,  0.5f, 0.0f, 1.0f, // vertex 3 */
-    /* }; */
-
     const float vertex[] = {
     // |     pos    |    tex    |
-        100.0f, 100.0f, 0.0f, 0.0f, // vertex 0
-        200.0f, 100.0f, 1.0f, 0.0f, // vertex 1
-        200.0f, 200.0f, 1.0f, 1.0f, // vertex 2
-        100.0f, 200.0f, 0.0f, 1.0f, // vertex 3
+        5.0f, 5.0f, 0.0f, 0.0f, // vertex 0
+        10.0f, 5.0f, 1.0f, 0.0f, // vertex 1
+        10.0f, 10.0f, 1.0f, 1.0f, // vertex 2
+        5.0f, 10.0f, 0.0f, 1.0f, // vertex 3
 
-        400.0f, 400.0f, 0.0f, 0.0f, // vertex 0
-        600.0f, 400.0f, 1.0f, 0.0f, // vertex 1
-        600.0f, 600.0f, 1.0f, 1.0f, // vertex 2
-        400.0f, 600.0f, 0.0f, 1.0f, // vertex 3
+        20.0f, 20.0f, 0.0f, 0.0f, // vertex 0
+        30.0f, 20.0f, 1.0f, 0.0f, // vertex 1
+        30.0f, 30.0f, 1.0f, 1.0f, // vertex 2
+        20.0f, 30.0f, 0.0f, 1.0f, // vertex 3
     };
 
     const unsigned int indices[] = {
@@ -227,13 +223,11 @@ static void test_game_start(game_t *game)
     shader_bind(&tg->shader);
     shader_set_uniform_1i(&tg->shader, "u_texture", 0);
     shader_set_uniform_4f(&tg->shader, "u_color", 0.35f, 0.2f, 0.6f, 0.0f);
-    shader_set_uniform_mat4(&tg->shader, "u_view_proj", tg->cam.view_projection_matrix);
     shader_set_uniform_1f(&tg->shader, "u_time", 0);
 
     //particle shader
     shader_init(&tg->particle_shader, "res/shaders/particle/flat");
     shader_bind(&tg->particle_shader);
-    shader_set_uniform_mat4(&tg->particle_shader, "u_view_proj", tg->cam.view_projection_matrix);
 }
 
 static void test_game_stop(game_t *game)
@@ -257,40 +251,57 @@ static void test_game_update(game_t *game, float delta_time)
 
     cam_ortho_controller_update(&tg->cam_controller, delta_time);
     
-    particle_pool_update(&tg->particle_pool, delta_time);
     
     if(input_manager_is_mouse_pressed(&tg->input_manager, GLFW_MOUSE_BUTTON_1))
     {
-        vec2 mouse_pos = {0};
-        float zoom = tg->cam_controller.zoom;
-        input_manager_get_mouse_pos(&tg->input_manager, mouse_pos);
-        
-        vec2 pos = {mouse_pos[0] * zoom, mouse_pos[1] * zoom};
+        vec2 pos = GLM_VEC2_ZERO_INIT;
+        input_manager_get_mouse_pos(&tg->input_manager, pos);
+        cam_ortho_controller_screen_to_world(&tg->cam_controller, pos, pos);
 
-        pos[1] = (tg->cam.bounds[3] * zoom) - pos[1];
+        if(!tg->first_click)
+        {
+            tg->last_emission_pos[0] = pos[0];
+            tg->last_emission_pos[1] = pos[1];
+            tg->first_click = true;
+        }
+    
+        for(int i = 0; i < particle_emmision_rate; i++)
+        {
+            //interpolation de la position de la souris
+            vec2 pos_interpolated = GLM_VEC2_ZERO_INIT;
+            glm_vec2_lerp(tg->last_emission_pos, pos, (float)i / particle_emmision_rate, pos_interpolated);
+            
+            particle_pool_emit(&tg->particle_pool, pos_interpolated);
+        }
 
-        for(int i = 0; i < 7000; i++)
-            particle_pool_emit(&tg->particle_pool, 10, pos);
+        tg->last_emission_pos[0] = pos[0];
+        tg->last_emission_pos[1] = pos[1];
+    }
+    else
+    {
+        tg->first_click = false;
     }
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
     tg->time += tg->time_incr;
+
+    particle_pool_update(&tg->particle_pool, delta_time);
 }
 
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = (test_game_t*)game;
     
-    grid_background_render(&tg->grid);
+    renderer_begin_scene(&tg->renderer, &tg->cam_controller.cam);
 
-    renderer_begin_scene(&tg->renderer, &tg->cam);
+    grid_background_render(&tg->grid, &tg->cam_controller.cam, &tg->renderer);
     
     shader_bind(&tg->shader);
     shader_set_uniform_1f(&tg->shader, "u_time", tg->time);
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
-    particle_pool_render(&tg->particle_pool, &tg->particle_shader, &tg->renderer, &tg->cam);
+    particle_pool_render(&tg->particle_pool, &tg->particle_shader, &tg->renderer, &tg->cam_controller.cam);
 
     renderer_end_scene(&tg->renderer);
 }
@@ -306,7 +317,6 @@ static void test_game_clean(game_t *game)
     vertex_array_destroy(&tg->vao);
 
     renderer_destroy(&tg->renderer);
-    cam_ortho_destroy(&tg->cam);
     cam_ortho_controller_destroy(&tg->cam_controller);
 }
 
@@ -316,7 +326,7 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
 
-    cam_ortho_controller_resize_viewport(&tg->cam_controller, width, height);
+    cam_ortho_controller_resize(&tg->cam_controller, width, height);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
