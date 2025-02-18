@@ -72,7 +72,7 @@ const particle_props_t particle_props = {
     .size_end = 1.0f,
     .size_variation = 5.0f,
 
-    .life_time = 2.0f,
+    .life_time = 3.0f,
     .life_time_variation = 0.0f
 };
 
