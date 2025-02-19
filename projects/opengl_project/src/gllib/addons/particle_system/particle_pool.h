@@ -5,14 +5,14 @@ typedef unsigned long size_t;
 #include "particle_props.h"
 #include "particle.h"
 
-#include "../../gllib/utils/dynamic_array/dyn_array.h"
+#include "../../utils/dynamic_array/dyn_array.h"
 
-#include "../../gllib/render/renderer/renderer.h"
-#include "../../gllib/render/camera/cam_ortho.h"
-#include "../../gllib/render/vertex_array/vertex_array.h"
-#include "../../gllib/render/vertex_buffer/vertex_buffer.h"
-#include "../../gllib/render/index_buffer/index_buffer.h"
-#include "../../gllib/render/shader/shader.h"
+#include "../../render/renderer/renderer.h"
+#include "../../render/camera/cam_ortho.h"
+#include "../../render/vertex_array/vertex_array.h"
+#include "../../render/vertex_buffer/vertex_buffer.h"
+#include "../../render/index_buffer/index_buffer.h"
+#include "../../render/shader/shader.h"
 
 typedef struct {
     particle_props_t props;

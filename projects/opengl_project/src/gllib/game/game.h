@@ -25,6 +25,7 @@ typedef struct _game_api_t{
     void (*on_render)(game_t *game);
     void (*on_clean)(game_t *game);
 
+    //GLFW callbacks
     struct {
         GLFWframebuffersizefun framebuffer_size_callback;
         GLFWkeyfun key_callback;

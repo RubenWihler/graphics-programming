@@ -26,7 +26,7 @@
 #include "../gllib/addons/camera_controller/cam_ortho_controller.h"
 #include "../gllib/addons/background/grid_background.h"
 
-#include "particle_system/particle_pool.h"
+#include "../gllib/addons/particle_system/particle_pool.h"
 
 struct _test_game_t {
     game_t game;

@@ -1,7 +1,7 @@
 #include "particle_pool.h"
 #include "particle.h"
 
-#include "../../gllib/log/log.h"
+#include "../../log/log.h"
 
 #include <stdlib.h>
 #include <stdio.h>

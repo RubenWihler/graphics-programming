@@ -119,7 +119,6 @@ static bool gl_init(game_t* game)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, game->config.api_version.glfw_context_minor_version);
     glfwWindowHint(GLFW_OPENGL_PROFILE, game->config.api_version.opengl_profile);
 
-    // Creation de la fenêtre
     game->window = glfwCreateWindow(game->config.width, game->config.height, 
                                     game->config.window_name, NULL, NULL);
     if (!game->window)
@@ -129,7 +128,6 @@ static bool gl_init(game_t* game)
         return false;
     }
 
-    // On rend le contexte courant
     glfwMakeContextCurrent(game->window);
     
     // Initialisation de GLEW (pour avoir acces aux fonctions OpenGL)

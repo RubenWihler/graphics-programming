@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../gllib/vendor/cglm/vec2.h"
-#include "../../gllib/vendor/cglm/vec4.h"
+#include "../../vendor/cglm/vec2.h"
+#include "../../vendor/cglm/vec4.h"
 
 typedef struct {
     vec2 pos;

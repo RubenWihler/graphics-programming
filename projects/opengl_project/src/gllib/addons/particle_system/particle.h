@@ -2,8 +2,8 @@
 
 #include "particle_spawn_props.h"
 
-#include "../../gllib/vendor/cglm/vec2.h"
-#include "../../gllib/vendor/cglm/vec4.h"
+#include "../../vendor/cglm/vec2.h"
+#include "../../vendor/cglm/vec4.h"
 
 //quelques constantes pour le batching des particules
 //chaque vertex est un coin d'un carre
