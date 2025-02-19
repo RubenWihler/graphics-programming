@@ -11,8 +11,6 @@ static bool gl_init(game_t* game);
 static bool callback_init(game_t* game);
 static void loop(game_t* game);
 
-static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-
 int game_init(game_t *game, game_config_t config, game_init_fn init_fn){
     assert(game != NULL);
     memset(game, 0, sizeof(game_t));
@@ -30,7 +28,7 @@ int game_init(game_t *game, game_config_t config, game_init_fn init_fn){
     }
     
     //initialisation du jeu "enfant"
-    if(!init_fn(game, game->api))
+    if(!init_fn(game))
     {
         LOG_ERROR("child game initialization failed!", true);
         game_clean(game);

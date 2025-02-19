@@ -36,6 +36,6 @@ bool particle_pool_init(particle_pool_t *pool, const particle_props_t props, con
 void particle_pool_destroy(particle_pool_t *pool);
 
 void particle_pool_update(particle_pool_t *pool, const float delta_time);
-void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const renderer_t *renderer, const cam_ortho_t *cam);
+void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const renderer_t *renderer);
 
 void particle_pool_emit(particle_pool_t *pool, const vec2 pos);

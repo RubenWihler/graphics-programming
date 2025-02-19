@@ -45,7 +45,7 @@ CC := gcc
 DEBUGER := gdb
 CFLAGS := -Wall -Wextra
 DEBUG_FLAGS := -g -O0 -DDEBUG
-RELEASE_FLAGS := -O3
+RELEASE_FLAGS := -O3 -Werror
 NAME :=app
 
 # Librairies

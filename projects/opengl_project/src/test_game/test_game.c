@@ -1,5 +1,6 @@
 #include "test_game.h"
 
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -76,7 +77,7 @@ const particle_props_t particle_props = {
     .life_time_variation = 0.0f
 };
 
-static bool test_game_init(game_t *game, game_api_t api);
+static bool test_game_init(game_t *game);
 static void test_game_start(game_t *game);
 static void test_game_stop(game_t *game);
 static void test_game_pause(game_t *game);
@@ -112,7 +113,7 @@ void test_game_destroy(game_t *game)
     free(test_game);
 }
 
-static bool test_game_init(game_t *game, game_api_t api)
+static bool test_game_init(game_t *game)
 {
     //game api
     game->api.on_start = test_game_start;
@@ -232,16 +233,19 @@ static void test_game_start(game_t *game)
 
 static void test_game_stop(game_t *game)
 {
+    (void)game;
     printf("%s\n", __func__);
 }
 
 static void test_game_pause(game_t *game)
 {
+    (void)game;
     printf("%s\n", __func__);
 }
 
 static void test_game_play(game_t *game)
 {
+    (void)game;
     printf("%s\n", __func__);
 }
 
@@ -301,7 +305,7 @@ static void test_game_render(game_t *game)
     shader_set_uniform_1f(&tg->shader, "u_time", tg->time);
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
-    particle_pool_render(&tg->particle_pool, &tg->particle_shader, &tg->renderer, &tg->cam_controller.cam);
+    particle_pool_render(&tg->particle_pool, &tg->particle_shader, &tg->renderer);
 
     renderer_end_scene(&tg->renderer);
 }
@@ -331,6 +335,7 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+    (void)xoffset;
     test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
     cam_ortho_controller_zoom(&tg->cam_controller, yoffset);
 }

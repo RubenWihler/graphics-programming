@@ -62,7 +62,7 @@ void particle_pool_update(particle_pool_t *pool, const float delta_time)
     }
 }
 
-void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const renderer_t *renderer, const cam_ortho_t *cam)
+void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const renderer_t *renderer)
 {
     unsigned int count = batch(pool);
 
@@ -111,7 +111,11 @@ void particle_pool_emit(particle_pool_t *pool, const vec2 pos)
     props.lifetime = pool->props.life_time + pool->props.life_time_variation * (((float)rand() / RAND_MAX) - 0.5f);
 
     particle_spawn(particle, props);
-    pool->index = (--pool->index % pool->capacity + pool->capacity) % pool->capacity;
+    pool->index--;
+    //on fait un modulo pour éviter de sortir du tableau
+    //on ne peut pas juste utiliser l'opérateur % car il ne gère pas les nombres négatifs
+    //https://stackoverflow.com/questions/13683563/whats-the-difference-between-mod-and-remainder
+    pool->index = (pool->index % pool->capacity + pool->capacity) % pool->capacity;
 }
 
 static bool init_render(particle_pool_t *pool)
