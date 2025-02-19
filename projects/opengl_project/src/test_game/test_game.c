@@ -1,10 +1,8 @@
 #include "test_game.h"
 
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../gllib/vendor/cglm/cam.h"
 #include "../gllib/vendor/cglm/vec2.h"
 
 #include <stdlib.h>
@@ -14,7 +12,6 @@
 
 #include "../gllib/log/log.h"
 #include "../gllib/game/game.h"
-#include "../gllib/render/camera/cam_ortho.h"
 #include "../gllib/inputs/input_manager.h"
 #include "../gllib/render/vertex_buffer/vertex_buffer.h"
 #include "../gllib/render/index_buffer/index_buffer.h"
@@ -51,30 +48,6 @@ struct _test_game_t {
     //mat4 *model;//car que 1 obj pour l'instant
     vec2 last_emission_pos;
     bool first_click;
-};
-
-const int particle_emmision_rate = 5000;
-const int particle_capacity = 1 << 20;
-const particle_props_t particle_props = {
-    .vel = {0.0f, 0.0f},
-    .vel_variation = {50.0f, 50.0f},
-    .vel_circular = true,
-
-    .color_start = {1.0f, 0.3f, 0.0f, 0.5f},
-    .color_end = {0.0f, 0.0f, 1.0f, 0.0f},
-    .color_variation = {0.0f, 0.0f, 0.0f, 1.0f},
-
-    .rotation = 0.0f,
-    .rotation_variation = 0.0f,
-    .rotation_speed = 0.1f,
-    .rotation_speed_variation = 10.0f,
-
-    .size_start = 1.0f,
-    .size_end = 1.0f,
-    .size_variation = 5.0f,
-
-    .life_time = 3.0f,
-    .life_time_variation = 0.0f
 };
 
 static bool test_game_init(game_t *game);
@@ -167,7 +140,8 @@ static bool test_game_init(game_t *game)
     }
 
     //particle pool
-    if(!particle_pool_init(&tg->particle_pool, particle_props, particle_capacity))
+    if(!particle_pool_init(&tg->particle_pool, tg->config.particle.particle_props, 
+                           tg->config.particle.particle_capacity))
     {
         LOG_ERROR("particle pool initialization failed!", true);
         return false;
@@ -269,11 +243,11 @@ static void test_game_update(game_t *game, float delta_time)
             tg->first_click = true;
         }
     
-        for(int i = 0; i < particle_emmision_rate; i++)
+        for(int i = 0; i < tg->config.particle.particle_emmision_rate; i++)
         {
             //interpolation de la position de la souris
             vec2 pos_interpolated = GLM_VEC2_ZERO_INIT;
-            glm_vec2_lerp(tg->last_emission_pos, pos, (float)i / particle_emmision_rate, pos_interpolated);
+            glm_vec2_lerp(tg->last_emission_pos, pos, (float)i / tg->config.particle.particle_emmision_rate, pos_interpolated);
             
             particle_pool_emit(&tg->particle_pool, pos_interpolated);
         }
