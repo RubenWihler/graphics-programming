@@ -9,15 +9,15 @@ int main()
         .game_config = DEFAULT_GAME_CONFIG,
 
         .particle = {
-            .particle_emmision_rate = 5000,
+            .particle_emmision_rate = 500,
             .particle_capacity = 1 << 20,
             .particle_props = {
                 .vel = {0.0f, 0.0f},
-                .vel_variation = {50.0f, 50.0f},
-                .vel_circular = true,
+                .vel_variation = {10.0f, 10.0f},
+                .vel_circular = false,
 
-                .color_start = {1.0f, 0.3f, 0.0f, 0.5f},
-                .color_end = {0.0f, 0.0f, 1.0f, 0.0f},
+                .color_start = {1.0f, 0.76f, 0.17f, 0.5f},
+                .color_end = {0.53f, 0.167f, 1.0f, 0.0f},
                 .color_variation = {0.0f, 0.0f, 0.0f, 1.0f},
 
                 .rotation = 0.0f,
