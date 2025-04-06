@@ -49,8 +49,8 @@ shader_program_source_t* shader_program_source_parse(const char* dirpath)
     strcpy(fragpath, dirpath);
     strcat(vertpath, "/" SHADER_FILE_NAME_VERTEX SHADER_FILE_EXT);
     strcat(fragpath, "/" SHADER_FILE_NAME_FRAGMENT SHADER_FILE_EXT);
-    vertpath[vert_pathlen] = '\0';
-    fragpath[frag_pathlen] = '\0';
+    vertpath[vert_pathlen-1] = '\0';
+    fragpath[frag_pathlen-1] = '\0';
     
     //allocation du shader_program_source_t
     shader_program_source_t *program = (shader_program_source_t*)malloc(sizeof(*program));
@@ -102,7 +102,7 @@ static char* get_file_content(const char* filepath)
     fseek(file, 0, SEEK_SET);
     
     //allocation du contenu
-    char* content = (char*)malloc(length * sizeof(char));
+    char* content = (char*)malloc((length+1) * sizeof(char));
     if(!content) return (perror("malloc"), fclose(file), NULL);
     
     //lecture du fichier
