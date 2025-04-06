@@ -170,9 +170,9 @@ static unsigned int batch(particle_pool_t *pool)
         particle_set_batch_vertex(particle, &pool->vertices[vert_index]);
 
         //on ajoute les indices pour les 2 triangles
-        for(size_t i = 0; i < INDICE_PER_PARTICLE; i++)
+        for(size_t j = 0; j < INDICE_PER_PARTICLE; j++)
         {
-            pool->indices[indice_index + i] = count * VERTEX_PER_PARTICLE + indices[i];
+            pool->indices[indice_index + j] = count * VERTEX_PER_PARTICLE + indices[j];
         }
 
         vert_index += 4 * PARTICLE_STRIDE;
