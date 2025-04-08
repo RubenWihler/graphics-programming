@@ -43,8 +43,9 @@
 # Variables
 CC := gcc
 DEBUGER := gdb
-CFLAGS := -Wall -Wextra -fsanitize=address -fsanitize=undefined -fsanitize=leak -fsanitize=pointer-compare -fsanitize=pointer-subtract -fsanitize=pointer-overflow -fsanitize=bounds -fsanitize=bounds-strict -fsanitize=alignment -fsanitize=object-size -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fsanitize=nonnull-attribute -fsanitize=returns-nonnull-attribute -fsanitize=bool -fsanitize=enum -fsanitize=vla-bound -fsanitize=vptr -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize=pointer-overflow -fsanitize=pointer-subtract -fsanitize=pointer-compare -fsanitize=leak -fsanitize=undefined -fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fsanitize=pointer-overflow -fsanitize=bounds -fsanitize=bounds-strict -fsanitize=alignment -fsanitize=object-size -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fsanitize=nonnull-attribute -fsanitize=returns-nonnull-attribute -fsanitize=bool -fsanitize=enum -fsanitize=vla-bound -fsanitize=vptr -fsanitize=undefined -fsanitize-address-use-after-scope
-DEBUG_FLAGS := -g -O0 -DDEBUG
+CFLAGS := -Wall -Wextra 
+SANITIZE_FLAGS := -fsanitize=undefined,address,leak -fno-omit-frame-pointer
+DEBUG_FLAGS := -g -O0 -DDEBUG $(SANITIZE_FLAGS)
 RELEASE_FLAGS := -O3 -Werror
 NAME := particle
 
