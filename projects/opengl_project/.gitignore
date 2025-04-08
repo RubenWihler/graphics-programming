@@ -5,6 +5,9 @@
 .idea/
 **/*.null-ls*
 
+# Ignore clangd cache files
+.cache/
+
 # Ignore object files in /obj/
 obj
 
