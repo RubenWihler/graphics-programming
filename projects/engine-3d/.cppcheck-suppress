@@ -1,0 +1,2 @@
+# Ignore all vendor directories
+*/*/vendor/*

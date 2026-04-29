@@ -1,0 +1,462 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/main.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/utils/dynamic_array/dyn_array.o",
+      "src/gllib/utils/dynamic_array/dyn_array.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/utils/dynamic_array/dyn_array.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/utils/dynamic_array/dyn_array.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/utils/hashmap/hashmap.o",
+      "src/gllib/utils/hashmap/hashmap.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/utils/hashmap/hashmap.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/utils/hashmap/hashmap.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/utils/gl_utils/gl_utils.o",
+      "src/gllib/utils/gl_utils/gl_utils.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/utils/gl_utils/gl_utils.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/utils/gl_utils/gl_utils.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/game/game.o",
+      "src/gllib/game/game.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/game/game.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/game/game.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/game/game_config.o",
+      "src/gllib/game/game_config.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/game/game_config.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/game/game_config.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/vendor/stb_image/stb_image.o",
+      "src/gllib/vendor/stb_image/stb_image.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/vendor/stb_image/stb_image.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/vendor/stb_image/stb_image.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/vertex_array/vertex_array.o",
+      "src/gllib/render/vertex_array/vertex_array.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/vertex_array/vertex_array.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/vertex_array/vertex_array.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/shader/shader.o",
+      "src/gllib/render/shader/shader.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/shader/shader.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/shader/shader.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/shader/shader_parser.o",
+      "src/gllib/render/shader/shader_parser.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/shader/shader_parser.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/shader/shader_parser.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/renderer/renderer.o",
+      "src/gllib/render/renderer/renderer.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/renderer/renderer.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/renderer/renderer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/index_buffer/index_buffer.o",
+      "src/gllib/render/index_buffer/index_buffer.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/index_buffer/index_buffer.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/index_buffer/index_buffer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/texture/texture.o",
+      "src/gllib/render/texture/texture.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/texture/texture.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/texture/texture.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/vertex_buffer_layout/vertex_buffer_layout.o",
+      "src/gllib/render/vertex_buffer_layout/vertex_buffer_layout.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/vertex_buffer_layout/vertex_buffer_layout.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/vertex_buffer_layout/vertex_buffer_layout.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/vertex_buffer/vertex_buffer.o",
+      "src/gllib/render/vertex_buffer/vertex_buffer.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/vertex_buffer/vertex_buffer.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/vertex_buffer/vertex_buffer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/render/camera/cam_ortho.o",
+      "src/gllib/render/camera/cam_ortho.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/render/camera/cam_ortho.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/render/camera/cam_ortho.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/inputs/input_manager.o",
+      "src/gllib/inputs/input_manager.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/inputs/input_manager.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/inputs/input_manager.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/addons/background/grid_background.o",
+      "src/gllib/addons/background/grid_background.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/addons/background/grid_background.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/addons/background/grid_background.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/addons/particle_system/particle_pool.o",
+      "src/gllib/addons/particle_system/particle_pool.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/addons/particle_system/particle_pool.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/addons/particle_system/particle_pool.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/addons/particle_system/particle.o",
+      "src/gllib/addons/particle_system/particle.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/addons/particle_system/particle.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/addons/particle_system/particle.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/addons/camera_controller/cam_ortho_controller.o",
+      "src/gllib/addons/camera_controller/cam_ortho_controller.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/addons/camera_controller/cam_ortho_controller.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/addons/camera_controller/cam_ortho_controller.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/gllib/log/log.o",
+      "src/gllib/log/log.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/gllib/log/log.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/gllib/log/log.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-DGLEW_STATIC",
+      "-g",
+      "-O0",
+      "-DDEBUG",
+      "-fsanitize=undefined,address,leak",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "obj/test_game/test_game.o",
+      "src/test_game/test_game.c"
+    ],
+    "directory": "/home/wihler/projects/graphics-programming/projects/opengl_project",
+    "file": "/home/wihler/projects/graphics-programming/projects/opengl_project/src/test_game/test_game.c",
+    "output": "/home/wihler/projects/graphics-programming/projects/opengl_project/obj/test_game/test_game.o"
+  }
+]
