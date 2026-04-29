@@ -1,6 +1,6 @@
 #include "vertex_buffer_layout.h"
 
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 #include <string.h>
 #include <assert.h>
 

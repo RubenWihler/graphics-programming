@@ -2,7 +2,7 @@
 #include "shader_parser.h"
 #include "../../log/log.h"
 
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

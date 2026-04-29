@@ -227,9 +227,9 @@ static void test_game_update(game_t *game, float delta_time)
 {
     test_game_t *tg = (test_game_t*)game;
 
+    particle_pool_update(&tg->particle_pool, delta_time);
     cam_ortho_controller_update(&tg->cam_controller, delta_time);
-    
-    
+
     if(input_manager_is_mouse_pressed(&tg->input_manager, GLFW_MOUSE_BUTTON_1))
     {
         vec2 pos = GLM_VEC2_ZERO_INIT;
@@ -238,22 +238,52 @@ static void test_game_update(game_t *game, float delta_time)
 
         if(!tg->first_click)
         {
-            tg->last_emission_pos[0] = pos[0];
-            tg->last_emission_pos[1] = pos[1];
+            glm_vec2_copy(pos, tg->last_emission_pos);
             tg->first_click = true;
         }
-    
-        for(int i = 0; i < tg->config.particle.particle_emmision_rate; i++)
-        {
-            //interpolation de la position de la souris
-            vec2 pos_interpolated = GLM_VEC2_ZERO_INIT;
-            glm_vec2_lerp(tg->last_emission_pos, pos, (float)i / tg->config.particle.particle_emmision_rate, pos_interpolated);
-            
-            particle_pool_emit(&tg->particle_pool, pos_interpolated);
-        }
+        else {
+            // Calcul de la distance parcourue depuis la dernière frame
+            float distance = glm_vec2_distance(tg->last_emission_pos, pos);
 
-        tg->last_emission_pos[0] = pos[0];
-        tg->last_emission_pos[1] = pos[1];
+            // Plus ce chiffre est petit, plus la ligne est dense.
+            float spacing = 0.01f;
+
+            // Si on a bougé suffisamment pour insérer des particules
+            if (distance > spacing)
+            {
+                // Vecteur direction normalisé
+                vec2 direction;
+                glm_vec2_sub(pos, tg->last_emission_pos, direction);
+                glm_vec2_normalize(direction);
+
+                // Combien de particules on peut mettre dans cet espace ?
+                int count = (int)(distance / spacing);
+
+                vec2 spawn_pos;
+                for(int i = 1; i <= count; i++)
+                {
+                    // On avance pas à pas de 'spacing' le long de la ligne
+                    glm_vec2_scale(direction, i * spacing, spawn_pos);
+                    glm_vec2_add(tg->last_emission_pos, spawn_pos, spawn_pos);
+
+                    particle_pool_emit(&tg->particle_pool, spawn_pos);
+                }
+
+                glm_vec2_copy(pos, tg->last_emission_pos);
+            }
+        }
+        // for(int i = 0; i < tg->config.particle.particle_emmision_rate; i++)
+        // {
+        //     //interpolation de la position de la souris
+        //     vec2 pos_interpolated = GLM_VEC2_ZERO_INIT;
+        //     float t = (float)(i+1) / tg->config.particle.particle_emmision_rate;
+        //     glm_vec2_lerp(tg->last_emission_pos, pos, t, pos_interpolated);
+        //
+        //     particle_pool_emit(&tg->particle_pool, pos_interpolated);
+        // }
+        //
+        // tg->last_emission_pos[0] = pos[0];
+        // tg->last_emission_pos[1] = pos[1];
     }
     else
     {
@@ -263,8 +293,6 @@ static void test_game_update(game_t *game, float delta_time)
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
     tg->time += tg->time_incr;
-
-    particle_pool_update(&tg->particle_pool, delta_time);
 }
 
 static void test_game_render(game_t *game)

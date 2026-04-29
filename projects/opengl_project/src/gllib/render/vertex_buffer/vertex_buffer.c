@@ -1,7 +1,7 @@
-#include <GL/glew.h>
 #include <string.h>
 #include <assert.h>
 
+#include "../../vendor/glad/glad.h"
 #include "vertex_buffer.h"
 #include "../../log/log.h"
 
@@ -14,7 +14,7 @@ bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned in
 
     glGenBuffers(1, &vb->renderer_id);
     glBindBuffer(GL_ARRAY_BUFFER, vb->renderer_id);
-    glBufferData(GL_ARRAY_BUFFER, size, data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, data, (dynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
     if (ASSERT_GL_ERROR_OCCURED("error while creating vertex buffer"))
     {

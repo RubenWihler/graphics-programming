@@ -18,7 +18,7 @@ bool particle_pool_init(particle_pool_t *pool, const particle_props_t props, con
     pool->props = props;
     pool->capacity = capacity;
 
-    pool->particles = (particle_t*)malloc(capacity * sizeof(particle_t));
+    pool->particles = (particle_t*)calloc(capacity, sizeof(particle_t));
     if(!pool->particles) return (perror("malloc"), false);
 
     if(!init_render(pool)) {

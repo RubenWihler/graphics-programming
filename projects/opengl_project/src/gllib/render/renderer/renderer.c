@@ -3,7 +3,7 @@
 #include "../../log/log.h"
 
 #include <string.h>
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 
 bool renderer_init(renderer_t *renderer, unsigned int id)
 {
@@ -15,7 +15,7 @@ bool renderer_init(renderer_t *renderer, unsigned int id)
 
 void renderer_destroy(renderer_t *renderer)
 {
-    (void)renderer;
+    renderer->data.view_proj_matrix = NULL;
 }
 
 void renderer_begin_scene(renderer_t *renderer, const cam_ortho_t *cam)

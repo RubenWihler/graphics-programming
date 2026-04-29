@@ -1,6 +1,6 @@
 #include "gl_utils.h"
 
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 #include <stdio.h>
 #include <assert.h>
 

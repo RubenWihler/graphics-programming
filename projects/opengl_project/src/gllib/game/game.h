@@ -2,9 +2,7 @@
 
 #include "game_config.h"
 
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include <stdbool.h>
 
 typedef enum _game_state_e {
@@ -39,10 +37,10 @@ typedef struct _game_api_t{
 struct _game_t {
     game_config_t config;
     game_state_e state;
-    
+
     GLFWwindow *window;
     bool is_running;
-    
+
     game_api_t api;
 };
 

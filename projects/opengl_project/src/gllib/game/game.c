@@ -1,8 +1,8 @@
+#include "../vendor/glad/glad.h"
 #include "game.h"
 #include "../log/log.h"
 
 #include <GLFW/glfw3.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -129,17 +129,15 @@ static bool gl_init(game_t* game)
     }
 
     glfwMakeContextCurrent(game->window);
-    
-    // Initialisation de GLEW (pour avoir acces aux fonctions OpenGL)
-    // GLEW permet de charger les fonctions OpenGL a partir du driver de la carte graphique
-    if (glewInit() != GLEW_OK)
+
+    // Initialisation de GLAD (pour avoir acces aux fonctions OpenGL)
+    // GLAD permet de charger les fonctions OpenGL a partir du driver de la carte graphique
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        char errmsg[512];
-        sprintf(errmsg, "Error while init GLEW: %s\n", glewGetErrorString(glewInit()));
-        LOG_ERROR(errmsg, true);
+        LOG_ERROR("Failed to initialize GLAD. OpenGL context might not be active.\n", true);
         return false;
     }
-    
+
     //defini le pointeur de la fenêtre pour les callback
     //on peut ainsi utiliser glfwGetWindowUserPointer pour récupérer le pointeur du jeu
     glfwSetWindowUserPointer(game->window, (void*)game);

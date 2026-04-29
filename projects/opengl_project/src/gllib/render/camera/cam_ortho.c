@@ -59,7 +59,7 @@ static void recalculate_view_matrix(cam_ortho_t *cam)
     mat4 transform = GLM_MAT4_IDENTITY_INIT;
     glm_translate(transform, cam->position);
     glm_rotate(transform, cam->rotation, (vec3){0.0f, 0.0f, 1.0f});
-    
+
     glm_mat4_inv(transform, cam->view_matrix);
     glm_mat4_mul(cam->projection_matrix, cam->view_matrix, cam->view_projection_matrix);
 }

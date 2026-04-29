@@ -50,10 +50,10 @@ RELEASE_FLAGS := -O3 -Werror
 NAME := particle
 
 # Librairies
-LIBS := -lm -lpthread -lglfw -lGL -lGLEW -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
+LIBS := -lm -lpthread -lglfw -lGL -lX11 -lXrandr -lXi -ldl -lXxf86vm -lXinerama -lXcursor
 
 #definition des preprocesseurs
-CFLAGS += -DGLEW_STATIC
+CFLAGS += 
 
 # Répertoires
 SRC_DIR := src

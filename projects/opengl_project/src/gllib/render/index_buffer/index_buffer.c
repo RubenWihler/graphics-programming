@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 #include <string.h>
 
 #include "index_buffer.h"

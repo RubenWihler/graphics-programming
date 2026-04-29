@@ -7,13 +7,12 @@ int main()
 {
     test_game_config_t config = {
         .game_config = DEFAULT_GAME_CONFIG,
-
         .particle = {
             .particle_emmision_rate = 500,
             .particle_capacity = 1 << 20,
             .particle_props = {
                 .vel = {0.0f, 0.0f},
-                .vel_variation = {10.0f, 10.0f},
+                .vel_variation = {-10.0f, 10.0f},
                 .vel_circular = false,
 
                 .color_start = {1.0f, 0.76f, 0.17f, 0.5f},

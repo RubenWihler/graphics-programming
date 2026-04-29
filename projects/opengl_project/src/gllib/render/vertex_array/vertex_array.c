@@ -2,7 +2,7 @@
 #include "../../utils/gl_utils/gl_utils.h"
 #include "../../log/log.h"
 
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 
 bool vertex_array_init(vertex_array_t *va)
 {
@@ -45,7 +45,7 @@ void vertex_array_add_buffer(vertex_array_t* va, const vertex_buffer_t *vb, cons
     vertex_array_bind(va);  //on bind le VAO
     vertex_buffer_bind(vb); //on bind le buffer
     size_t offest = 0;
-    
+
     for(size_t i = 0; i < dyn_array_count(layout->elements); i++)
     {
         vertex_buffer_element_t *element = dyn_array_get(layout->elements, i);
@@ -58,7 +58,7 @@ void vertex_array_add_buffer(vertex_array_t* va, const vertex_buffer_t *vb, cons
             layout->stride,
             (const void*)offest
         ));
-    
+
         offest += element->count * gl_get_type_size(element->type);
     }
 }
