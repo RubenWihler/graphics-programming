@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "../gllib/log/log.h"
+#include "../gllib/utils/common.h"
 #include "../gllib/game/game.h"
 #include "../gllib/inputs/input_manager.h"
 #include "../gllib/render/vertex_buffer/vertex_buffer.h"
@@ -81,7 +82,7 @@ game_t* test_game_create(test_game_config_t config)
 
 void test_game_destroy(game_t *game)
 {
-    test_game_t *test_game = (test_game_t*)game;
+    test_game_t *test_game = container_of(game, test_game_t, game);
     game_clean(&test_game->game);
     free(test_game);
 }
@@ -104,7 +105,7 @@ static bool test_game_init(game_t *game)
     game->api.glfw_callbacks.cursor_position_callback = NULL;
     game->api.glfw_callbacks.scroll_callback = scroll_callback;
 
-    test_game_t *tg = (test_game_t*)game;
+    test_game_t *tg = container_of(game, test_game_t, game);
 
     //input manager
     if(!input_manager_init(&tg->input_manager, game->window))
@@ -157,7 +158,7 @@ static bool test_game_init(game_t *game)
 static void test_game_start(game_t *game)
 {
     printf("%s\n", __func__);
-    test_game_t *tg = (test_game_t*)game;
+    test_game_t *tg = container_of(game, test_game_t, game);
 
     const float vertex[] = {
     // |     pos    |    tex    |
@@ -227,7 +228,7 @@ static void test_game_play(game_t *game)
 
 static void test_game_update(game_t *game, float delta_time)
 {
-    test_game_t *tg = (test_game_t*)game;
+    test_game_t *tg = container_of(game, test_game_t, game);
 
     particle_pool_update(&tg->particle_pool, delta_time);
     cam_ortho_controller_update(&tg->cam_controller, delta_time);
@@ -299,7 +300,7 @@ static void test_game_update(game_t *game, float delta_time)
 
 static void test_game_render(game_t *game)
 {
-    test_game_t *tg = (test_game_t*)game;
+    test_game_t *tg = container_of(game, test_game_t, game);
     
     renderer_begin_scene(&tg->renderer, &tg->cam_controller.cam);
 
@@ -316,7 +317,7 @@ static void test_game_render(game_t *game)
 
 static void test_game_clean(game_t *game)
 {
-    test_game_t *tg = (test_game_t*)game;
+    test_game_t *tg = container_of(game, test_game_t, game);
 
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
@@ -331,7 +332,7 @@ static void test_game_clean(game_t *game)
 
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
+    test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
     glViewport(0, 0, width, height);
 
     cam_ortho_controller_resize(&tg->cam_controller, width, height);
@@ -340,6 +341,6 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     (void)xoffset;
-    test_game_t *tg = (test_game_t*)glfwGetWindowUserPointer(window);
+    test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
     cam_ortho_controller_zoom(&tg->cam_controller, yoffset);
 }
