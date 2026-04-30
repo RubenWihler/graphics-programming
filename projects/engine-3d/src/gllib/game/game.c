@@ -175,6 +175,8 @@ static void loop(game_t* game)
         delta_time = current_time - last_time;
         last_time = current_time;
 
+        if (delta_time > 0.05) delta_time = 0.05;
+
         //clear le buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
