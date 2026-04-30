@@ -47,7 +47,7 @@ struct _game_t {
 
 typedef bool (*game_init_fn)(game_t *game);
 
-int game_init(game_t *game, game_config_t config, game_init_fn init);
+int game_init(game_t *game, const game_config_t* config, game_init_fn init);
 void game_clean(game_t *game);
 void game_start(game_t *game);
 void game_stop(game_t *game);

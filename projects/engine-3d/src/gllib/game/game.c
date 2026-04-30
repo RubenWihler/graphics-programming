@@ -10,11 +10,11 @@ static bool gl_init(game_t* game);
 static bool callback_init(game_t* game);
 static void loop(game_t* game);
 
-int game_init(game_t *game, game_config_t config, game_init_fn init_fn){
+int game_init(game_t *game, const game_config_t* config, game_init_fn init_fn){
     assert(game != NULL);
     memset(game, 0, sizeof(game_t));
 
-    game->config = config;
+    game->config = *config;
     game->is_running = false;
     game->state = GAME_STATE_INIT;
 

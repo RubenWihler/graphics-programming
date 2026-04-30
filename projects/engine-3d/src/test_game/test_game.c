@@ -63,14 +63,14 @@ static void test_game_clean(game_t *game);
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-game_t* test_game_create(test_game_config_t config)
+game_t* test_game_create(test_game_config_t* config)
 {
-    test_game_t *test_game = (test_game_t*)malloc(sizeof(test_game_t));
+    test_game_t *test_game = (test_game_t*)calloc(1, sizeof(test_game_t));
     if(!test_game) return (perror("malloc"), NULL);
 
-    test_game->config = config;
+    test_game->config = *config;
 
-    if (!game_init(&test_game->game, config.game_config, test_game_init))
+    if (!game_init(&test_game->game, &config->game_config, test_game_init))
     {
         LOG_ERROR("game initialization failed!", true);
         free(test_game);
@@ -97,7 +97,7 @@ static bool test_game_init(game_t *game)
     game->api.on_update = test_game_update;
     game->api.on_render = test_game_render;
     game->api.on_clean = test_game_clean;
-    
+
     //glfw callbacks
     game->api.glfw_callbacks.framebuffer_size_callback = framebuffer_size_callback;
     game->api.glfw_callbacks.key_callback = NULL;
@@ -182,7 +182,7 @@ static void test_game_start(game_t *game)
     };
 
     vertex_array_init(&tg->vao);
-    vertex_buffer_init(&tg->vbo, vertex, 4 * 8 * sizeof(float), false);
+    vertex_buffer_init(&tg->vbo, vertex, sizeof(vertex), false);
 
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
@@ -190,7 +190,8 @@ static void test_game_start(game_t *game)
     vertex_buffer_layout_push_float(&layout, 2);//tex
     vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
 
-    index_buffer_init(&tg->ibo, indices, 12, false);
+    int index_count = sizeof(indices) / sizeof(indices[0]);
+    index_buffer_init(&tg->ibo, indices, index_count, false);
     index_buffer_bind(&tg->ibo);
 
     texture_init(&tg->texture, "res/textures/c_logo.png");

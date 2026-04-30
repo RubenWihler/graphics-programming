@@ -16,5 +16,5 @@ typedef struct _test_game_config_t {
 
 } test_game_config_t;
 
-struct _game_t* test_game_create(test_game_config_t config);
+struct _game_t* test_game_create(test_game_config_t* config);
 void test_game_destroy(struct _game_t *game);

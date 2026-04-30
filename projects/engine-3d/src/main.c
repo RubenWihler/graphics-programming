@@ -32,7 +32,7 @@ int main()
         }
     };
 
-    game_t *game = test_game_create(config);
+    game_t *game = test_game_create(&config);
     game_start(game);
     test_game_destroy(game);
     return 0;
