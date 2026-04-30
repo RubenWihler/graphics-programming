@@ -1,9 +1,8 @@
 #include "test_game.h"
 
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../gllib/vendor/cglm/vec2.h"
+#include "../gllib/vendor/cglm/types.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,6 +23,7 @@
 #include "../gllib/addons/background/grid_background.h"
 
 #include "../gllib/addons/particle_system/particle_pool.h"
+
 
 struct _test_game_t {
     game_t game;
@@ -146,7 +146,7 @@ static bool test_game_init(game_t *game)
         LOG_ERROR("particle pool initialization failed!", true);
         return false;
     }
-    
+
     tg->time = 0.0f;
     tg->time_incr = 0.1f;
 
@@ -179,10 +179,10 @@ static void test_game_start(game_t *game)
         4, 5, 6, //1er  triangle
         4, 6, 7, //2eme triangle
     };
-    
+
     vertex_array_init(&tg->vao);
     vertex_buffer_init(&tg->vbo, vertex, 4 * 8 * sizeof(float), false);
-    
+
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
     vertex_buffer_layout_push_float(&layout, 2);//pos
@@ -196,9 +196,11 @@ static void test_game_start(game_t *game)
     texture_bind(&tg->texture, &(uint){0});
     shader_init(&tg->shader, "res/shaders/shiny_2d_tex");
     shader_bind(&tg->shader);
-    shader_set_uniform_1i(&tg->shader, "u_texture", 0);
-    shader_set_uniform_4f(&tg->shader, "u_color", 0.35f, 0.2f, 0.6f, 0.0f);
-    shader_set_uniform_1f(&tg->shader, "u_time", 0);
+
+    #define SHINYING_COLOR 0.35f, 0.2f, 0.6f, 0.0f
+    shader_set_uniform(&tg->shader, "u_texture", 0);
+    shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
+    shader_set_uniform(&tg->shader, "u_time", 0);
 
     //particle shader
     shader_init(&tg->particle_shader, "res/shaders/particle/flat");

@@ -1,5 +1,5 @@
 #include "grid_background.h"
-#include <GL/glew.h>
+#include "../../vendor/glad/glad.h"
 
 #define SQUARE_COLOR 0.145f, 0.149f, 0.188f, 1.0f
 #define BACK_COLOR   0.369f, 0.373f, 0.451f, 1.0f
@@ -31,7 +31,7 @@ bool grid_background_init(grid_background_t *grid)
 
     shader_init(&grid->shader, "res/shaders/grid_bg_flat");
     shader_bind(&grid->shader);
-    shader_set_uniform_4f(&grid->shader, "u_color", SQUARE_COLOR);
+    shader_set_uniform(&grid->shader, "u_color", (vec4){SQUARE_COLOR});
 
     return true;
 }

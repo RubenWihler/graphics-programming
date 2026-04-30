@@ -34,7 +34,7 @@ void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao,
     vertex_array_bind(vao);
     index_buffer_bind(ibo);
 
-    shader_set_uniform_mat4(shader, "u_view_proj", *renderer->data.view_proj_matrix);
+    shader_set_uniform(shader, "u_view_proj", *renderer->data.view_proj_matrix);
     ASSERT_GL_CALL(glDrawElements(GL_TRIANGLES, ibo->count, GL_UNSIGNED_INT, NULL));
 }
 
