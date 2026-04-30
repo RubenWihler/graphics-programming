@@ -1,8 +1,6 @@
 #include "test_game/test_game.h"
 #include "gllib/game/game.h"
 
-extern game_config_t DEFAULT_GAME_CONFIG;
-
 int main()
 {
     test_game_config_t config = {

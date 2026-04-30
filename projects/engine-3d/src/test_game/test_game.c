@@ -200,7 +200,7 @@ static void test_game_start(game_t *game)
     #define SHINYING_COLOR 0.35f, 0.2f, 0.6f, 0.0f
     shader_set_uniform(&tg->shader, "u_texture", 0);
     shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
-    shader_set_uniform(&tg->shader, "u_time", 0);
+    shader_set_uniform(&tg->shader, "u_time", 0.0);
 
     //particle shader
     shader_init(&tg->particle_shader, "res/shaders/particle/flat");

@@ -43,7 +43,7 @@
 # Variables
 CC := gcc
 DEBUGER := gdb
-CFLAGS := -Wall -Wextra 
+CFLAGS := -Wall -Wextra -MMD -MP
 SANITIZE_FLAGS := -fsanitize=undefined,address,leak -fno-omit-frame-pointer
 DEBUG_FLAGS := -g -O0 -DDEBUG $(SANITIZE_FLAGS)
 RELEASE_FLAGS := -O3 -Werror
@@ -100,3 +100,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
+-include $(OBJ_FILES:.o=.d)
