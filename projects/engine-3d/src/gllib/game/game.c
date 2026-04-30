@@ -112,7 +112,7 @@ static bool gl_init(game_t* game)
         LOG_ERROR("Error while init GLFW!", true);
         return false;
     }
-    
+
     // Configuration de la version d'OpenGL
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, game->config.api_version.glfw_context_major_version);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, game->config.api_version.glfw_context_minor_version);
@@ -151,13 +151,15 @@ static bool gl_init(game_t* game)
         //si fps = 0, on regarde si la vsync est activé
         glfwSwapInterval((game->config.vsync) ? 1 : 0);
     }
-    
+
     //initialisation du blending
     if(game->config.blending.enabled)
     {
         glBlendFunc(game->config.blending.src, game->config.blending.dst);
         glEnable(GL_BLEND);
     }
+
+    // glEnable(GL_DEPTH_TEST);
 
     return true;
 }
