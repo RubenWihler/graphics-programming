@@ -7,7 +7,7 @@
 typedef struct {
     vec3 position;
     float rotation;
-    
+
     vec4 bounds;
     mat4 view_matrix;
     mat4 projection_matrix;
