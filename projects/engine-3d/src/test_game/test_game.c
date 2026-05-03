@@ -147,45 +147,52 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    //a modifier pour cube 3d
+    // Format : X, Y, Z, U, V
     const float vertex[] = {
-        //face avant z=1
-         -0.5f, -0.5f,  -0.5f,   // bas  gauche
-          0.5f, -0.5f,  -0.5f,   // bas  droite
-          0.5f,  0.5f,  -0.5f,   // haut droite
-         -0.5f, 0.5f,  -0.5f,   // haut gauche
+        // Face avant (Z = 1.0f)
+        -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
 
-        //face arriere z=0.5
-         -0.5f, -0.5f,  0.5f,   // bas  gauche
-          0.5f, -0.5f,  0.5f,   // bas  droite
-          0.5f,  0.5f,  0.5f,   // haut droite
-         -0.5f, 0.5f,  0.5f,   // haut gauche
+        // Face arrière (Z = -1.0f) - Attention à l'ordre pour les UVs et le Culling !
+        -1.0f, -1.0f, -1.0f,  1.0f, 0.0f, // Remarque : les UVs sont inversés horizontalement
+         1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+
+        // Face gauche (X = -1.0f)
+        -1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
+
+        // Face droite (X = 1.0f)
+         1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+
+        // Face bas (Y = -1.0f)
+        -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,  0.0f, 1.0f,
+
+        // Face haut (Y = 1.0f)
+        -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,  1.0f, 1.0f
     };
 
     const unsigned int indices[] = {
-        //face avant
-        0, 1, 2,
-        0, 3, 2,
-
-        //face arriere
-        4, 5, 6,
-        4, 7, 6,
-
-        //face haut
-        3, 2, 6,
-        3, 7, 6,
-
-        //face bas
-        0, 1, 5,
-        0, 4, 5,
-
-        //face gauche
-        0, 4, 7,
-        0, 3, 7,
-
-        //face droite
-        1, 5, 6,
-        1, 2, 6
+        0,  1,  2,      2,  3,  0,  // avant
+        4,  5,  6,      6,  7,  4,  // arrière
+        8,  9,  10,     10, 11, 8,  // gauche
+        12, 13, 14,     14, 15, 12, // droite
+        16, 17, 18,     18, 19, 16, // bas
+        20, 21, 22,     22, 23, 20  // haut
     };
 
     vertex_array_init(&tg->vao);
@@ -193,15 +200,16 @@ static void test_game_start(game_t *game)
 
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
-    vertex_buffer_layout_push_float(&layout, 3);//pos
+    vertex_buffer_layout_push_float(&layout, 3);//pos x,y,z
+    vertex_buffer_layout_push_float(&layout, 2);//tex u,v
     vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
 
     int index_count = sizeof(indices) / sizeof(indices[0]);
     index_buffer_init(&tg->ibo, indices, index_count, false);
     index_buffer_bind(&tg->ibo);
 
-    // texture_init(&tg->texture, "res/textures/c_logo.png");
-    // texture_bind(&tg->texture, &(uint){0});
+    texture_init(&tg->texture, "res/textures/brick.png");
+    texture_bind(&tg->texture, &(uint){0});
     shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
 
@@ -259,6 +267,11 @@ static void test_game_render(game_t *game)
 
     shader_bind(&tg->shader);
     shader_set_uniform(&tg->shader, "u_model", tg->model);
+
+    uint32_t slot = 0;
+    texture_bind(&tg->texture, &slot);
+    shader_set_uniform(&tg->shader, "u_texture", 0);
+
     //mat view_proj update dans renderer_draw()
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
