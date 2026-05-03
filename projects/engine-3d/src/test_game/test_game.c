@@ -31,6 +31,8 @@ struct _test_game_t {
     renderer_t renderer;
     cam_ortho_controller_t cam_controller;
 
+    //objet 1 : cube
+    mat4 model;
     vertex_array_t vao;
     vertex_buffer_t vbo;
     index_buffer_t ibo;
@@ -140,25 +142,43 @@ static void test_game_start(game_t *game)
 
     //a modifier pour cube 3d
     const float vertex[] = {
-    // |     pos    |    tex    |
-        5.0f, 5.0f, 0.0f, 0.0f, // vertex 0
-        10.0f, 5.0f, 1.0f, 0.0f, // vertex 1
-        10.0f, 10.0f, 1.0f, 1.0f, // vertex 2
-        5.0f, 10.0f, 0.0f, 1.0f, // vertex 3
+        //face avant z=1
+         -1.0f, -1.0f,  1.0f,   // bas  gauche
+          1.0f, -1.0f,  1.0f,   // bas  droite
+          1.0f,  1.0f,  1.0f,   // haut droite
+         -1.0f, 1.0f, 1.0f,   // haut gauche
 
-        20.0f, 20.0f, 0.0f, 0.0f, // vertex 0
-        30.0f, 20.0f, 1.0f, 0.0f, // vertex 1
-        30.0f, 30.0f, 1.0f, 1.0f, // vertex 2
-        20.0f, 30.0f, 0.0f, 1.0f, // vertex 3
+        //face arriere z=3
+         -1.0f, -1.0f,  3.0f,   // bas  gauche
+          1.0f, -1.0f,  3.0f,   // bas  droite
+          1.0f,  1.0f,  3.0f,   // haut droite
+         -1.0f,  1.0f,  3.0f,   // haut gauche
     };
 
-    //a modifier
     const unsigned int indices[] = {
-        0, 1, 2, //1er  triangle
-        0, 2, 3, //2eme triangle
+        //face avant
+        0, 1, 2,
+        0, 3, 2,
 
-        4, 5, 6, //1er  triangle
-        4, 6, 7, //2eme triangle
+        //face arriere
+        4, 5, 6,
+        4, 7, 6,
+
+        //face haut
+        3, 2, 6,
+        3, 7, 6,
+
+        //face bas
+        0, 1, 5,
+        0, 4, 5,
+
+        //face gauche
+        0, 4, 7,
+        0, 3, 7,
+
+        //face droite
+        1, 5, 6,
+        1, 2, 6
     };
 
     vertex_array_init(&tg->vao);
@@ -166,23 +186,26 @@ static void test_game_start(game_t *game)
 
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
-    vertex_buffer_layout_push_float(&layout, 2);//pos
-    vertex_buffer_layout_push_float(&layout, 2);//tex
+    vertex_buffer_layout_push_float(&layout, 3);//pos
     vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
 
     int index_count = sizeof(indices) / sizeof(indices[0]);
     index_buffer_init(&tg->ibo, indices, index_count, false);
     index_buffer_bind(&tg->ibo);
 
-    texture_init(&tg->texture, "res/textures/c_logo.png");
-    texture_bind(&tg->texture, &(uint){0});
-    shader_init(&tg->shader, "res/shaders/shiny_2d_tex");
+    // texture_init(&tg->texture, "res/textures/c_logo.png");
+    // texture_bind(&tg->texture, &(uint){0});
+    shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
 
+    glm_mat4_identity(tg->model);
+    shader_set_uniform(&tg->shader, "u_model", tg->model);
+
     #define SHINYING_COLOR 0.35f, 0.2f, 0.6f, 0.0f
-    shader_set_uniform(&tg->shader, "u_texture", 0);
-    shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
-    shader_set_uniform(&tg->shader, "u_time", 0.0);
+    // shader_set_uniform(&tg->shader, "u_time", 0.0);
+    // shader_set_uniform(&tg->shader, "u_texture", 0);
+    // shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
+    // shader_set_uniform(&tg->shader, "u_time", 0.0);
 }
 
 static void test_game_stop(game_t *game)
@@ -221,7 +244,8 @@ static void test_game_render(game_t *game)
     renderer_begin_scene(&tg->renderer, &tg->cam_controller.cam);
 
     shader_bind(&tg->shader);
-    shader_set_uniform_1f(&tg->shader, "u_time", tg->time);
+    shader_set_uniform(&tg->shader, "u_model", (vec4*)tg->model);
+    //mat view_proj update dans renderer_draw()
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
     renderer_end_scene(&tg->renderer);

@@ -9,7 +9,7 @@ bool vertex_buffer_init(vertex_buffer_t *vb, const void* data, const unsigned in
 {
     assert(vb);
     memset(vb, 0, sizeof(*vb));
-    
+
     ASSERT_GL_BEGIN();
 
     glGenBuffers(1, &vb->renderer_id);

@@ -1,14 +1,11 @@
 #version 330 core
 
-layout(location=0) in vec4 position;
+layout(location=0) in vec4 a_position;
 
-uniform float u_time;
+uniform mat4 u_model;
+uniform mat4 u_view_proj;
 
 void main()
 {
-    //get current vertex
-    float scale = 0.1;
-    if(gl_VertexID % 2 == 0) scale *= -1;
-
-    gl_Position = position + vec4(scale * sin(u_time), scale * cos(u_time), 0, 0); 
+    gl_Position = u_view_proj * u_model * a_position;
 };
