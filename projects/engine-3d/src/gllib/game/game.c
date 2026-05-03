@@ -159,7 +159,10 @@ static bool gl_init(game_t* game)
         glEnable(GL_BLEND);
     }
 
-    // glEnable(GL_DEPTH_TEST);
+    if (game->config.depth.enabled)
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
 
     return true;
 }

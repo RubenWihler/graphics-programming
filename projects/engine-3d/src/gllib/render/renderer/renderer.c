@@ -18,9 +18,14 @@ void renderer_destroy(renderer_t *renderer)
     renderer->data.view_proj_matrix = NULL;
 }
 
-void renderer_begin_scene(renderer_t *renderer, const cam_ortho_t *cam)
+void renderer_begin_scene_ortho(renderer_t *renderer, const cam_ortho_t *cam)
 {
-    renderer->data.view_proj_matrix = (mat4*)&cam->view_projection_matrix;
+    renderer->data.view_proj_matrix = (mat4*)&cam->view_proj;
+}
+
+void renderer_begin_scene_persp(renderer_t *renderer, const cam_persp_t *cam)
+{
+    renderer->data.view_proj_matrix = (mat4*)&cam->view_proj;
 }
 
 void renderer_end_scene(__attribute__((unused))const renderer_t *renderer)

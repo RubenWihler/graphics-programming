@@ -21,6 +21,10 @@ typedef struct _game_config_t {
         unsigned int src;
         unsigned int dst;
     } blending;
+
+    struct {
+        bool enabled;
+    } depth;
 } game_config_t;
 
 extern game_config_t DEFAULT_GAME_CONFIG;

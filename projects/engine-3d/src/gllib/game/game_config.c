@@ -23,6 +23,10 @@ game_config_t DEFAULT_GAME_CONFIG =
         .enabled = true,
         .src = GL_SRC_ALPHA,
         .dst = GL_ONE_MINUS_SRC_ALPHA
+    },
+
+    .depth = {
+        .enabled = true
     }
 };
 

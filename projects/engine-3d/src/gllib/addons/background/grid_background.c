@@ -1,5 +1,11 @@
 #include "grid_background.h"
+
 #include "../../vendor/glad/glad.h"
+#include "../../vendor/cglm/mat4.h"
+#include "../../vendor/cglm/cglm.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #define SQUARE_COLOR 0.145f, 0.149f, 0.188f, 1.0f
 #define BACK_COLOR   0.369f, 0.373f, 0.451f, 1.0f

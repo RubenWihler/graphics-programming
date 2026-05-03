@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 
 #include "../gllib/vendor/cglm/types.h"
+#include "../gllib/vendor/cglm/mat4.h"
+#include "../gllib/vendor/cglm/cglm.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,8 +21,9 @@
 #include "../gllib/render/shader/shader.h"
 #include "../gllib/render/texture/texture.h"
 #include "../gllib/render/renderer/renderer.h"
+#include "../gllib/render/camera/cam_persp.h"
 
-#include "../gllib/addons/camera_controller/cam_ortho_controller.h"
+// #include "../gllib/addons/camera_controller/cam_ortho_controller.h"
 
 
 struct _test_game_t {
@@ -29,7 +32,8 @@ struct _test_game_t {
 
     input_manager_t input_manager;
     renderer_t renderer;
-    cam_ortho_controller_t cam_controller;
+    cam_persp_t cam;
+    // cam_ortho_controller_t cam_controller;
 
     //objet 1 : cube
     mat4 model;
@@ -116,17 +120,20 @@ static bool test_game_init(game_t *game)
         return false;
     }
 
-    //camera controller
+    //camera
+    float fov = glm_rad(45.0), nearz = 0.1f, farz = 100.0f;
     int winw, winh;
     glfwGetWindowSize(game->window, &winw, &winh);
     const float aspect_ratio = (float)winw / (float)winh;
-    cam_ortho_controller_config_t cam_controller_config = CAM_ORTHO_CONTROLLER_DEFAULT_CONFIG;
-    cam_controller_config.enable_rotation = true;
-    if(!cam_ortho_controller_init(&tg->cam_controller, &tg->input_manager, game->window, cam_controller_config, aspect_ratio))
+
+    if (!cam_persp_init(&tg->cam, fov, aspect_ratio, nearz, farz))
     {
-        LOG_ERROR("camera controller initialization failed!", true);
+        LOG_ERROR("camera initialization failed!", true);
         return false;
     }
+
+    vec3 new_pos = {0.0f, 0.0f, 5.0f};
+    cam_persp_set_position(&tg->cam, new_pos);
 
     tg->time = 0.0f;
     tg->time_incr = 0.1f;
@@ -143,16 +150,16 @@ static void test_game_start(game_t *game)
     //a modifier pour cube 3d
     const float vertex[] = {
         //face avant z=1
-         -1.0f, -1.0f,  1.0f,   // bas  gauche
-          1.0f, -1.0f,  1.0f,   // bas  droite
-          1.0f,  1.0f,  1.0f,   // haut droite
-         -1.0f, 1.0f, 1.0f,   // haut gauche
+         -0.5f, -0.5f,  -0.5f,   // bas  gauche
+          0.5f, -0.5f,  -0.5f,   // bas  droite
+          0.5f,  0.5f,  -0.5f,   // haut droite
+         -0.5f, 0.5f,  -0.5f,   // haut gauche
 
-        //face arriere z=3
-         -1.0f, -1.0f,  3.0f,   // bas  gauche
-          1.0f, -1.0f,  3.0f,   // bas  droite
-          1.0f,  1.0f,  3.0f,   // haut droite
-         -1.0f,  1.0f,  3.0f,   // haut gauche
+        //face arriere z=0.5
+         -0.5f, -0.5f,  0.5f,   // bas  gauche
+          0.5f, -0.5f,  0.5f,   // bas  droite
+          0.5f,  0.5f,  0.5f,   // haut droite
+         -0.5f, 0.5f,  0.5f,   // haut gauche
     };
 
     const unsigned int indices[] = {
@@ -201,10 +208,10 @@ static void test_game_start(game_t *game)
     glm_mat4_identity(tg->model);
     shader_set_uniform(&tg->shader, "u_model", tg->model);
 
-    #define SHINYING_COLOR 0.35f, 0.2f, 0.6f, 0.0f
+    #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
+    shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
     // shader_set_uniform(&tg->shader, "u_texture", 0);
-    // shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
 }
 
@@ -228,10 +235,17 @@ static void test_game_play(game_t *game)
 
 static void test_game_update(game_t *game, float delta_time)
 {
+    (void)delta_time;
     test_game_t *tg = container_of(game, test_game_t, game);
 
     //a changer pour un nouveau cam_persp_controller
-    cam_ortho_controller_update(&tg->cam_controller, delta_time);
+    // cam_ortho_controller_update(&tg->cam_controller, delta_time);
+
+    // Définir la vitesse de rotation (ex: 1 radian par seconde)
+    float rotation_speed = 1.0f;
+    vec3 rotation_axis = {1.0f, 1.0f, 0.0f};
+    glm_vec3_normalize(rotation_axis);
+    glm_rotate(tg->model, rotation_speed * delta_time, rotation_axis);
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -241,10 +255,10 @@ static void test_game_update(game_t *game, float delta_time)
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
-    renderer_begin_scene(&tg->renderer, &tg->cam_controller.cam);
+    renderer_begin_scene(&tg->renderer, &tg->cam);
 
     shader_bind(&tg->shader);
-    shader_set_uniform(&tg->shader, "u_model", (vec4*)tg->model);
+    shader_set_uniform(&tg->shader, "u_model", tg->model);
     //mat view_proj update dans renderer_draw()
     renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
 
@@ -262,7 +276,7 @@ static void test_game_clean(game_t *game)
     vertex_array_destroy(&tg->vao);
 
     renderer_destroy(&tg->renderer);
-    cam_ortho_controller_destroy(&tg->cam_controller);
+    // cam_ortho_controller_destroy(&tg->cam_controller);
 }
 
 
@@ -271,12 +285,16 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
     glViewport(0, 0, width, height);
 
-    cam_ortho_controller_resize(&tg->cam_controller, width, height);
+    float aspect_ratio = (float)width / (float)height;
+    cam_persp_set_aspect_ratio(&tg->cam, aspect_ratio);
+    // cam_ortho_controller_resize(&tg->cam_controller, width, height);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+    (void)window;
+    (void)yoffset;
     (void)xoffset;
-    test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
-    cam_ortho_controller_zoom(&tg->cam_controller, yoffset);
+    // test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
+    // cam_ortho_controller_zoom(&tg->cam_controller, yoffset);
 }

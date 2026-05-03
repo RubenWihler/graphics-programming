@@ -1,6 +1,8 @@
 #include "cam_ortho_controller.h"
 #include "../../log/log.h"
 
+#include "../../vendor/cglm/cglm.h"
+
 #include <string.h>
 
 static void update_camera_projection(cam_ortho_controller_t *controller);
