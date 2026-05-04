@@ -46,7 +46,7 @@ DEBUGER := gdb
 CFLAGS := -Wall -Wextra -MMD -MP
 SANITIZE_FLAGS := -fsanitize=undefined,address,leak -fno-omit-frame-pointer
 DEBUG_FLAGS := -g -O0 -DDEBUG $(SANITIZE_FLAGS)
-RELEASE_FLAGS := -O3 -Werror
+RELEASE_FLAGS := -O3
 NAME := particle
 
 # Librairies

@@ -24,6 +24,8 @@
 #include "../gllib/render/camera/cam_persp.h"
 #include "../gllib/addons/camera_controller/cam_persp_controller.h"
 
+#include "../gllib/components/transform/transform.h"
+#include "../gllib/render/mesh/mesh.h"
 
 // #include "../gllib/addons/camera_controller/cam_ortho_controller.h"
 
@@ -37,18 +39,13 @@ struct _test_game_t {
     cam_persp_controller_t cam_ctrl;
 
     //objet 1 : cube
-    mat4 model;
-    vertex_array_t vao;
-    vertex_buffer_t vbo;
-    index_buffer_t ibo;
+    mesh_t cube_mesh;
+    transform_t cube_transform;
     texture_t texture;
     shader_t shader;
+
     float time;
     float time_incr;
-
-    //mat4 *model;//car que 1 obj pour l'instant
-    vec2 last_emission_pos;
-    bool first_click;
 };
 
 static bool test_game_init(game_t *game);
@@ -191,30 +188,32 @@ static void test_game_start(game_t *game)
         20, 21, 22,     22, 23, 20  // haut
     };
 
-    vertex_array_init(&tg->vao);
-    vertex_buffer_init(&tg->vbo, vertex, sizeof(vertex), false);
-
+    // Layout
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
-    vertex_buffer_layout_push_float(&layout, 3);//pos x,y,z
-    vertex_buffer_layout_push_float(&layout, 2);//tex u,v
-    vertex_array_add_buffer(&tg->vao, &tg->vbo, &layout);
+    vertex_buffer_layout_push_float(&layout, 3); // position
+    vertex_buffer_layout_push_float(&layout, 2); // UVs
 
+    // Mesh
     int index_count = sizeof(indices) / sizeof(indices[0]);
-    index_buffer_init(&tg->ibo, indices, index_count, false);
-    index_buffer_bind(&tg->ibo);
+    mesh_init(&tg->cube_mesh, vertex, sizeof(vertex), indices, index_count, &layout);
 
-    texture_init(&tg->texture, "res/textures/brick.png");
+    // Transform
+    transform_init(&tg->cube_transform);
+    // Exemple : on déplace le cube un peu vers la droite
+    tg->cube_transform.position[0] = 0.0f; 
+
+    // Texture
+    texture_init(&tg->texture, "res/textures/gold.png");
     texture_bind(&tg->texture, &(uint){0});
+
+    // Shader
     shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
 
-    glm_mat4_identity(tg->model);
-    shader_set_uniform(&tg->shader, "u_model", tg->model);
-
-    #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
+    // #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
-    shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
+    // shader_set_uniform(&tg->shader, "u_color", (vec4){ SHINYING_COLOR});
     // shader_set_uniform(&tg->shader, "u_texture", 0);
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
 }
@@ -244,11 +243,10 @@ static void test_game_update(game_t *game, float delta_time)
 
     cam_persp_controller_update(&tg->cam_ctrl, delta_time);
 
-    // Définir la vitesse de rotation (ex: 1 radian par seconde)
-    // float rotation_speed = 1.0f;
-    // vec3 rotation_axis = {1.0f, 1.0f, 0.0f};
-    // glm_vec3_normalize(rotation_axis);
-    // glm_rotate(tg->model, rotation_speed * delta_time, rotation_axis);
+    // Faire tourner le cube via son transform (sur l'axe Y et Z par exemple)
+    float rotation_speed = 1.0f;
+    tg->cube_transform.rotation[1] += rotation_speed * delta_time; // Rotation Y
+    tg->cube_transform.rotation[2] += (rotation_speed * 0.5f) * delta_time; // Rotation Z
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -261,14 +259,34 @@ static void test_game_render(game_t *game)
     renderer_begin_scene(&tg->renderer, &tg->cam_ctrl.cam);
 
     shader_bind(&tg->shader);
-    shader_set_uniform(&tg->shader, "u_model", tg->model);
+
 
     uint32_t slot = 0;
     texture_bind(&tg->texture, &slot);
     shader_set_uniform(&tg->shader, "u_texture", 0);
 
-    //mat view_proj update dans renderer_draw()
-    renderer_draw(&tg->renderer, &tg->vao, &tg->ibo, &tg->shader);
+    tg->cube_transform.position[0] = 0.0; 
+    tg->cube_transform.position[1] = 0.0;
+    tg->cube_transform.position[2] = 0.0;
+    for (size_t i = 0; i < 50; i++){
+        for (size_t j = 0; j < 50; j++){
+            for (size_t k = 0; k < 50; k++){
+                mat4 model_matrix;
+                transform_get_matrix(&tg->cube_transform, model_matrix);
+                shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
+
+                renderer_draw(&tg->renderer, &tg->cube_mesh.vao, &tg->cube_mesh.ibo, &tg->shader);
+
+                tg->cube_transform.position[0] += 5.0;
+            }
+            tg->cube_transform.position[1] += 5.0;
+            tg->cube_transform.position[0] = 0.0; 
+        }
+        tg->cube_transform.position[2] += 5.0;
+        tg->cube_transform.position[1] = 0.0;
+        tg->cube_transform.position[0] = 0.0; 
+    }
+
 
     renderer_end_scene(&tg->renderer);
 }
@@ -277,11 +295,9 @@ static void test_game_clean(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
 
+    mesh_destroy(&tg->cube_mesh);
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
-    index_buffer_destroy(&tg->ibo);
-    vertex_buffer_destroy(&tg->vbo);
-    vertex_array_destroy(&tg->vao);
 
     renderer_destroy(&tg->renderer);
     // cam_ortho_controller_destroy(&tg->cam_controller);
