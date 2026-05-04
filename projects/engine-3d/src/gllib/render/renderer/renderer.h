@@ -7,7 +7,8 @@
 #include "../camera/cam_persp.h"
 
 typedef struct _scene_data_t{
-    mat4 *view_proj_matrix;
+    mat4 *view_mat;
+    mat4 *proj_mat;
 } scene_data_t;
 
 typedef struct _renderer_t{

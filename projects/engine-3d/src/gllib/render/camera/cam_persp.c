@@ -7,8 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-static void recalculate_view_proj(cam_persp_t *cam);
-
 bool cam_persp_init(cam_persp_t *cam, float fov, float aspect, float near_z, float far_z)
 {
     memset(cam, 1, sizeof(*cam));
@@ -53,15 +51,6 @@ void cam_persp_set_aspect_ratio(cam_persp_t *cam, float aspect)
 void cam_persp_update_view(cam_persp_t *cam)
 {
     glm_lookat(cam->position, cam->target, cam->up, cam->view);
-    recalculate_view_proj(cam);
-}
-
-void recalculate_view_proj(cam_persp_t *cam)
-{
-    mat4 transform = GLM_MAT4_IDENTITY_INIT;
-    glm_translate(transform, cam->position);
-    // glm_rotate(transform, cam->rotation, (vec3){0.0f, 0.0f, 1.0f});
-
-    glm_mat4_inv(transform, cam->view);
     glm_mat4_mul(cam->proj, cam->view, cam->view_proj);
 }
+

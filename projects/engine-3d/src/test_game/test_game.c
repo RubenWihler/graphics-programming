@@ -22,6 +22,8 @@
 #include "../gllib/render/texture/texture.h"
 #include "../gllib/render/renderer/renderer.h"
 #include "../gllib/render/camera/cam_persp.h"
+#include "../gllib/addons/camera_controller/cam_persp_controller.h"
+
 
 // #include "../gllib/addons/camera_controller/cam_ortho_controller.h"
 
@@ -32,8 +34,7 @@ struct _test_game_t {
 
     input_manager_t input_manager;
     renderer_t renderer;
-    cam_persp_t cam;
-    // cam_ortho_controller_t cam_controller;
+    cam_persp_controller_t cam_ctrl;
 
     //objet 1 : cube
     mat4 model;
@@ -120,20 +121,15 @@ static bool test_game_init(game_t *game)
         return false;
     }
 
+    //desactive cruseur
+    glfwSetInputMode(game->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     //camera
-    float fov = glm_rad(45.0), nearz = 0.1f, farz = 100.0f;
     int winw, winh;
     glfwGetWindowSize(game->window, &winw, &winh);
     const float aspect_ratio = (float)winw / (float)winh;
 
-    if (!cam_persp_init(&tg->cam, fov, aspect_ratio, nearz, farz))
-    {
-        LOG_ERROR("camera initialization failed!", true);
-        return false;
-    }
-
-    vec3 new_pos = {0.0f, 0.0f, 5.0f};
-    cam_persp_set_position(&tg->cam, new_pos);
+    cam_persp_controller_init(&tg->cam_ctrl, &tg->input_manager, aspect_ratio);
 
     tg->time = 0.0f;
     tg->time_incr = 0.1f;
@@ -246,14 +242,13 @@ static void test_game_update(game_t *game, float delta_time)
     (void)delta_time;
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    //a changer pour un nouveau cam_persp_controller
-    // cam_ortho_controller_update(&tg->cam_controller, delta_time);
+    cam_persp_controller_update(&tg->cam_ctrl, delta_time);
 
     // Définir la vitesse de rotation (ex: 1 radian par seconde)
-    float rotation_speed = 1.0f;
-    vec3 rotation_axis = {1.0f, 1.0f, 0.0f};
-    glm_vec3_normalize(rotation_axis);
-    glm_rotate(tg->model, rotation_speed * delta_time, rotation_axis);
+    // float rotation_speed = 1.0f;
+    // vec3 rotation_axis = {1.0f, 1.0f, 0.0f};
+    // glm_vec3_normalize(rotation_axis);
+    // glm_rotate(tg->model, rotation_speed * delta_time, rotation_axis);
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -263,7 +258,7 @@ static void test_game_update(game_t *game, float delta_time)
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
-    renderer_begin_scene(&tg->renderer, &tg->cam);
+    renderer_begin_scene(&tg->renderer, &tg->cam_ctrl.cam);
 
     shader_bind(&tg->shader);
     shader_set_uniform(&tg->shader, "u_model", tg->model);
@@ -299,8 +294,7 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 
     float aspect_ratio = (float)width / (float)height;
-    cam_persp_set_aspect_ratio(&tg->cam, aspect_ratio);
-    // cam_ortho_controller_resize(&tg->cam_controller, width, height);
+    cam_persp_controller_resize(&tg->cam_ctrl, aspect_ratio);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
