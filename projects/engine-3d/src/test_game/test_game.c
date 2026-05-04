@@ -140,43 +140,43 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    // Format : X, Y, Z, U, V
+    // Format : Pos(X, Y, Z), Norm(NX, NY, NZ), Tex(U, V)
     const float vertex[] = {
-        // Face avant (Z = 1.0f)
-        -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
+        // --- Face avant (Z = 1.0f) --- Normale = (0, 0, 1)
+        -1.0f, -1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 1.0f,
 
-        // Face arrière (Z = -1.0f) - Attention à l'ordre pour les UVs et le Culling !
-        -1.0f, -1.0f, -1.0f,  1.0f, 0.0f, // Remarque : les UVs sont inversés horizontalement
-         1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+        // --- Face arrière (Z = -1.0f) --- Normale = (0, 0, -1)
+        -1.0f, -1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   1.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   1.0f, 1.0f,
 
-        // Face gauche (X = -1.0f)
-        -1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
-        -1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
+        // --- Face gauche (X = -1.0f) --- Normale = (-1, 0, 0)
+        -1.0f,  1.0f,  1.0f,  -1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,  -1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,  -1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,  -1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
 
-        // Face droite (X = 1.0f)
-         1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+        // --- Face droite (X = 1.0f) --- Normale = (1, 0, 0)
+         1.0f,  1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
 
-        // Face bas (Y = -1.0f)
-        -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,  1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,  0.0f, 1.0f,
+        // --- Face bas (Y = -1.0f) --- Normale = (0, -1, 0)
+        -1.0f, -1.0f, -1.0f,   0.0f, -1.0f,  0.0f,   0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,   0.0f, -1.0f,  0.0f,   1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,   0.0f, -1.0f,  0.0f,   1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,   0.0f, -1.0f,  0.0f,   0.0f, 1.0f,
 
-        // Face haut (Y = 1.0f)
-        -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,  1.0f, 1.0f
+        // --- Face haut (Y = 1.0f) --- Normale = (0, 1, 0)
+        -1.0f,  1.0f, -1.0f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,   0.0f,  1.0f,  0.0f,   0.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,   0.0f,  1.0f,  0.0f,   1.0f, 1.0f
     };
 
     const unsigned int indices[] = {
@@ -192,6 +192,7 @@ static void test_game_start(game_t *game)
     vertex_buffer_layout_t layout;
     vertex_buffer_layout_init(&layout);
     vertex_buffer_layout_push_float(&layout, 3); // position
+    vertex_buffer_layout_push_float(&layout, 3); // Normale
     vertex_buffer_layout_push_float(&layout, 2); // UVs
 
     // Mesh
@@ -204,12 +205,15 @@ static void test_game_start(game_t *game)
     tg->cube_transform.position[0] = 0.0f; 
 
     // Texture
-    texture_init(&tg->texture, "res/textures/gold.png");
+    texture_init(&tg->texture, "res/textures/diamond.png");
     texture_bind(&tg->texture, &(uint){0});
 
     // Shader
     shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
+
+
+    // ... bind texture et draw ...
 
     // #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
@@ -260,33 +264,24 @@ static void test_game_render(game_t *game)
 
     shader_bind(&tg->shader);
 
+    // --- VARIABLES D'ÉCLAIRAGE ---
+    vec3 light_pos = {2.0f, 3.0f, 2.0f}; 
+    vec3 light_color = {1.0f, 1.0f, 1.0f}; 
+    vec3 view_pos;
+    glm_vec3_copy(tg->cam_ctrl.cam.position, view_pos);
+    shader_set_uniform_vec3(&tg->shader, "u_lightPos", light_pos);
+    shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
+    shader_set_uniform_vec3(&tg->shader, "u_viewPos", view_pos);
 
     uint32_t slot = 0;
     texture_bind(&tg->texture, &slot);
     shader_set_uniform(&tg->shader, "u_texture", 0);
 
-    tg->cube_transform.position[0] = 0.0; 
-    tg->cube_transform.position[1] = 0.0;
-    tg->cube_transform.position[2] = 0.0;
-    for (size_t i = 0; i < 50; i++){
-        for (size_t j = 0; j < 50; j++){
-            for (size_t k = 0; k < 50; k++){
-                mat4 model_matrix;
-                transform_get_matrix(&tg->cube_transform, model_matrix);
-                shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
+    mat4 model_matrix;
+    transform_get_matrix(&tg->cube_transform, model_matrix);
+    shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
 
-                renderer_draw(&tg->renderer, &tg->cube_mesh.vao, &tg->cube_mesh.ibo, &tg->shader);
-
-                tg->cube_transform.position[0] += 5.0;
-            }
-            tg->cube_transform.position[1] += 5.0;
-            tg->cube_transform.position[0] = 0.0; 
-        }
-        tg->cube_transform.position[2] += 5.0;
-        tg->cube_transform.position[1] = 0.0;
-        tg->cube_transform.position[0] = 0.0; 
-    }
-
+    renderer_draw(&tg->renderer, &tg->cube_mesh.vao, &tg->cube_mesh.ibo, &tg->shader);
 
     renderer_end_scene(&tg->renderer);
 }

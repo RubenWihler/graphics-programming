@@ -18,6 +18,7 @@ void shader_unbind(const shader_t *shader);
 
 void shader_set_uniform_1i(const shader_t *shader, const char* name, int v0);
 void shader_set_uniform_1f(const shader_t *shader, const char* name, float v0);
+void shader_set_uniform_vec3(const shader_t *shader, const char* name, vec3 v);
 void shader_set_uniform_vec4(const shader_t *shader, const char* name, vec4 v);
 void shader_set_uniform_mat4(const shader_t *shader, const char* name, mat4 v0);
 

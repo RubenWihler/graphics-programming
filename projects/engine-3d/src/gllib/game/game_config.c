@@ -20,7 +20,7 @@ game_config_t DEFAULT_GAME_CONFIG =
 
     //render settings
     .blending = {
-        .enabled = true,
+        .enabled = false,
         .src = GL_SRC_ALPHA,
         .dst = GL_ONE_MINUS_SRC_ALPHA
     },

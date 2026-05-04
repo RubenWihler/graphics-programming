@@ -64,6 +64,9 @@ void shader_set_uniform_1f(const shader_t *shader, const char* name, float v0)
 void shader_set_uniform_mat4(const shader_t *shader, const char* name, mat4 v0)
 { ASSERT_GL_CALL(glUniformMatrix4fv(shader_get_uniform_location(shader, name), 1, GL_FALSE, &v0[0][0])); }
 
+void shader_set_uniform_vec3(const shader_t *shader, const char* name, vec3 v)
+{ ASSERT_GL_CALL(glUniform3fv(shader_get_uniform_location(shader, name), 1, v)); }
+
 void shader_set_uniform_vec4(const shader_t *shader, const char* name, vec4 v)
 { ASSERT_GL_CALL(glUniform4fv(shader_get_uniform_location(shader, name), 1, v)); }
 
