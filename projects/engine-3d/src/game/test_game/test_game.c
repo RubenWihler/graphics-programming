@@ -22,23 +22,31 @@
 #include "../../core/math/transform/transform.h"
 #include "../../core/render/mesh/mesh.h"
 
+#include "../../core/ecs/ecs.h"
+#include "../../engine/components/c_mesh.h"
+#include "../../engine/components/components.h"
+#include "../../engine/systems/s_render.h"
+#include "../../engine/systems/s_rotator.h"
+
 struct _test_game_t {
     game_t game;
     test_game_config_t config;
 
+    ecs_registry_t registry;
     input_manager_t input_manager;
     renderer_t renderer;
     cam_persp_controller_t cam_ctrl;
 
     //objet 1
-    model_t model;
-    transform_t transform;
     shader_t shader;
 
     //si le model n'a pas de material defini dans le .mtl
     //on le fait a la main
     material_t gold_mat;
     texture_t texture;
+
+    //en attendant le ressource manager
+    model_t model;
 };
 
 //game api
@@ -59,17 +67,6 @@ static void test_game_start(game_t *game)
     LOG_INFO("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    // Charge le model
-    if (!model_load_from_obj(&tg->model, "res/models/kayle.obj", "res/models/")) {
-        LOG_ERROR("Impossible de charger le modele 3d !");
-    }
-
-    // Transform
-    transform_init(&tg->transform);
-    // tg->transform.position[0] = 0.0f;
-    glm_vec3_scale(tg->transform.scale, 50.0, tg->transform.scale);
-
-
     // Shader
     shader_init(&tg->shader, "res/shaders/default");
     //si le shader a besoin d'uniforms additionnel:
@@ -87,6 +84,27 @@ static void test_game_start(game_t *game)
     glm_vec3_copy((vec3){0.628f, 0.555f, 0.366f}, tg->gold_mat.specular);
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
     tg->gold_mat.diffuse_map = &tg->texture;
+
+    for (size_t i = 0; i < 10000; i++){
+        // 2. Création de l'Entité "Lune"
+        entity_t moon = ecs_create_entity(&tg->registry);
+
+        // 3. Ajout du Transform
+        transform_t t;
+        transform_init(&t);
+        t.position[0] = ((float)(rand() % 100) - 50.0f);
+        t.position[1] = ((float)(rand() % 100) - 50.0f);
+        t.position[2] = ((float)(rand() % 100) - 50.0f);
+        ecs_add_component(&tg->registry, moon, COMP_TRANSFORM, &t);
+
+        // 4. Ajout du Mesh
+        mesh_component_t m;
+        m.model = &tg->model;
+        model_load_from_obj(m.model, "res/models/sphere.obj", "res/models/");
+        m.use_material_override = true;
+        m.material_override = tg->gold_mat; // Ton matériau doré
+        ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
+    }
 }
 
 static void test_game_update(game_t *game, float delta_time)
@@ -97,6 +115,9 @@ static void test_game_update(game_t *game, float delta_time)
     cam_persp_controller_update(&tg->cam_ctrl, delta_time);
 
     // Faire tourner un objet via son transform (sur l'axe Y et Z par exemple)
+    s_rotator_update(&tg->registry, 1.0f, delta_time);
+
+    //
     // float rotation_speed = 1.0f;
     // tg->cube_transform.rotation[1] += rotation_speed * delta_time; // Rotation Y
     // tg->cube_transform.rotation[2] += (rotation_speed * 0.5f) * delta_time; // Rotation Z
@@ -117,16 +138,7 @@ static void test_game_render(game_t *game)
     shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
     shader_set_uniform_vec3(&tg->shader, "u_viewPos", view_pos);
 
-    //recupere la matrice model via le transform de l'objet
-    mat4 model_matrix;
-    transform_get_matrix(&tg->transform, model_matrix);
-    shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
-
-    // renderer_draw_model(&tg->renderer, &tg->model, &tg->shader);
-
-    for (size_t i = 0; i < tg->model.submesh_count; i++){
-        renderer_draw_mesh(&tg->renderer, &tg->model.submeshes[i], &tg->shader, &tg->gold_mat);
-    }
+    s_render_update(&tg->registry, &tg->renderer, &tg->shader);
 
     renderer_end_scene(&tg->renderer);
 }
@@ -135,6 +147,10 @@ static void test_game_render(game_t *game)
 static bool test_game_init(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
+
+    ecs_init(&tg->registry);
+    ecs_register_component(&tg->registry, COMP_TRANSFORM, sizeof(transform_t));
+    ecs_register_component(&tg->registry, COMP_MESH, sizeof(mesh_component_t));
 
     // Input manager
     if(!input_manager_init(&tg->input_manager, game->window))

@@ -30,7 +30,7 @@ void renderer_begin_scene_persp(renderer_t *renderer, const cam_persp_t *cam);
 
 void renderer_end_scene(const renderer_t *renderer);
 
-void renderer_draw_model(const renderer_t *renderer, const model_t *model, const shader_t *shader);
+void renderer_draw_model(const renderer_t *renderer, const model_t *model, const shader_t *shader, const material_t* material_override);
 void renderer_draw_mesh(const renderer_t *renderer, const submesh_t* mesh, const shader_t *shader, const material_t *material);
 void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao, 
                    const index_buffer_t *ibo, const shader_t *shader,

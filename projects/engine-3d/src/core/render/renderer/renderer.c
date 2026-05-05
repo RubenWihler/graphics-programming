@@ -37,14 +37,14 @@ void renderer_end_scene(__attribute__((unused))const renderer_t *renderer)
 {
 }
 
-void renderer_draw_model(const renderer_t *renderer, const model_t *model, const shader_t *shader)
+void renderer_draw_model(const renderer_t *renderer, const model_t *model, const shader_t *shader, const material_t* material_override)
 {
     // On boucle sur chaque sous-partie (submesh) de l'arbre
     for (size_t i = 0; i < model->submesh_count; i++) {
         submesh_t *submesh = &model->submeshes[i];
-        material_t *mat = NULL;
+        const material_t *mat = material_override;
 
-        if (submesh->material_index >= 0 && submesh->material_index < (int)model->material_count) {
+        if (!mat && submesh->material_index >= 0 && submesh->material_index < (int)model->material_count) {
             mat = &model->materials[submesh->material_index];
         }
 
