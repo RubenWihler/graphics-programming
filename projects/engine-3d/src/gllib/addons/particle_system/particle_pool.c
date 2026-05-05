@@ -69,7 +69,7 @@ void particle_pool_render(particle_pool_t *pool, const shader_t *shader, const r
     vertex_buffer_set_data(&pool->vb, pool->vertices, count * VERTEX_PER_PARTICLE * PARTICLE_STRIDE * sizeof(float));
     index_buffer_set_data(&pool->ib, pool->indices, count * INDICE_PER_PARTICLE);
 
-    renderer_draw(renderer, &pool->va, &pool->ib, shader);
+    renderer_draw(renderer, &pool->va, &pool->ib, shader, NULL);
 }
 
 void particle_pool_emit(particle_pool_t *pool, const vec2 pos)

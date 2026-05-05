@@ -3,6 +3,7 @@
 #include "../vertex_array/vertex_array.h"
 #include "../index_buffer/index_buffer.h"
 #include "../shader/shader.h"
+#include "../material/material.h"
 #include "../camera/cam_ortho.h"
 #include "../camera/cam_persp.h"
 
@@ -29,4 +30,5 @@ void renderer_begin_scene_persp(renderer_t *renderer, const cam_persp_t *cam);
 void renderer_end_scene(const renderer_t *renderer);
 
 void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao, 
-                   const index_buffer_t *ibo, const shader_t *shader);
+                   const index_buffer_t *ibo, const shader_t *shader,
+                   const material_t *material);

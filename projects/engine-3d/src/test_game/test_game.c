@@ -38,9 +38,10 @@ struct _test_game_t {
     renderer_t renderer;
     cam_persp_controller_t cam_ctrl;
 
-    //objet 1 : cube
-    mesh_t cube_mesh;
-    transform_t cube_transform;
+    //objet 1 : arbre
+    mesh_t mesh;
+    transform_t transform;
+    material_t gold_mat;
     texture_t texture;
     shader_t shader;
 
@@ -141,14 +142,13 @@ static void test_game_start(game_t *game)
     test_game_t *tg = container_of(game, test_game_t, game);
 
     // C'est quand même plus propre qu'un tableau de 200 lignes !
-    if (!mesh_load_from_obj(&tg->cube_mesh, "res/models/tree.obj")) {
+    if (!mesh_load_from_obj(&tg->mesh, "res/models/tree.obj")) {
         LOG_ERROR("Impossible de charger le modele 3D", true);
     }
 
     // Transform
-    transform_init(&tg->cube_transform);
-    // Exemple : on déplace le cube un peu vers la droite
-    tg->cube_transform.position[0] = 0.0f; 
+    transform_init(&tg->transform);
+    tg->transform.position[0] = 0.0f;
 
     // Texture
     texture_init(&tg->texture, "res/textures/tree.png");
@@ -158,6 +158,13 @@ static void test_game_start(game_t *game)
     shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
 
+    // Material
+    material_init_default(&tg->gold_mat);
+    glm_vec3_copy((vec3){0.247f, 0.199f, 0.074f}, tg->gold_mat.ambient);
+    glm_vec3_copy((vec3){0.751f, 0.606f, 0.226f}, tg->gold_mat.diffuse);
+    glm_vec3_copy((vec3){0.628f, 0.555f, 0.366f}, tg->gold_mat.specular);
+    tg->gold_mat.shininess = 51.2f; // Brillance métallique
+    // tg->gold_mat.diffuse_map = &tg->texture;
 
     // #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
@@ -217,15 +224,21 @@ static void test_game_render(game_t *game)
     shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
     shader_set_uniform_vec3(&tg->shader, "u_viewPos", view_pos);
 
-    uint32_t slot = 0;
-    texture_bind(&tg->texture, &slot);
-    shader_set_uniform(&tg->shader, "u_texture", 0);
+    // uint32_t slot = 0;
+    // texture_bind(&tg->texture, &slot);
+    // shader_set_uniform(&tg->shader, "u_texture", 0);
 
     mat4 model_matrix;
-    transform_get_matrix(&tg->cube_transform, model_matrix);
+    transform_get_matrix(&tg->transform, model_matrix);
     shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
 
-    renderer_draw(&tg->renderer, &tg->cube_mesh.vao, &tg->cube_mesh.ibo, &tg->shader);
+    renderer_draw(
+        &tg->renderer,
+        &tg->mesh.vao,
+        &tg->mesh.ibo,
+        &tg->shader,
+        &tg->gold_mat
+    );
 
     renderer_end_scene(&tg->renderer);
 }
@@ -234,7 +247,7 @@ static void test_game_clean(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    mesh_destroy(&tg->cube_mesh);
+    mesh_destroy(&tg->mesh);
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
 

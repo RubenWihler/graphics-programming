@@ -38,16 +38,37 @@ void renderer_end_scene(__attribute__((unused))const renderer_t *renderer)
 }
 
 void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao, 
-                   const index_buffer_t *ibo, const shader_t *shader)
+                   const index_buffer_t *ibo, const shader_t *shader, 
+                   const material_t *material)
 {
     shader_bind(shader);
     vertex_array_bind(vao);
     index_buffer_bind(ibo);
 
+    //calculer la matrice de vue projection
     mat4 view_proj;
     if (renderer->data.view_mat && renderer->data.proj_mat) {
         glm_mat4_mul(*(renderer->data.proj_mat), *(renderer->data.view_mat), view_proj);
         shader_set_uniform(shader, "u_view_proj", view_proj);
+    }
+
+    // --- ENVOI DU MATERIAU ---
+    if (material) {
+        // Envoi des couleurs et de la brillance
+        shader_set_uniform_vec3(shader, "u_material.ambient", (float*)material->ambient);
+        shader_set_uniform_vec3(shader, "u_material.diffuse", (float*)material->diffuse);
+        shader_set_uniform_vec3(shader, "u_material.specular", (float*)material->specular);
+        shader_set_uniform_1f(shader, "u_material.shininess", material->shininess);
+
+        // Gestion de la texture optionnelle
+        if (material->diffuse_map) {
+            uint32_t slot = 0;
+            texture_bind(material->diffuse_map, &slot);
+            shader_set_uniform_1i(shader, "u_material.diffuse_map", 0);
+            shader_set_uniform_1i(shader, "u_material.has_diffuse_map", 1);
+        } else {
+            shader_set_uniform_1i(shader, "u_material.has_diffuse_map", 0);
+        }
     }
 
     ASSERT_GL_CALL(glDrawElements(GL_TRIANGLES, ibo->count, GL_UNSIGNED_INT, NULL));

@@ -81,7 +81,7 @@ static int shader_get_uniform_location(const shader_t *shader, const char* name)
         char errmsg[255];
         memset(errmsg, 0, 255);
         sprintf(errmsg, "Cannot find uniform location : %s !", name);
-        LOG_ERROR(errmsg, false);    
+        LOG_ERROR(errmsg, false);
     }
 
     hashmap_add(shader->uniforms, name, &location);    

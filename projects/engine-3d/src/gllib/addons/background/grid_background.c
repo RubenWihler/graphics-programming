@@ -64,7 +64,7 @@ void grid_background_render(grid_background_t *grid, cam_ortho_t *cam, renderer_
     shader_bind(&grid->shader);
     shader_set_uniform_mat4(&grid->shader, "u_model", model);
 
-    renderer_draw(renderer, &grid->vao, &grid->ibo, &grid->shader);
+    renderer_draw(renderer, &grid->vao, &grid->ibo, &grid->shader, NULL);
 }
 
 static void update_vertex_buffer(grid_background_t *grid)
