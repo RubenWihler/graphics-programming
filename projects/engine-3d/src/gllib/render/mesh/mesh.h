@@ -17,3 +17,7 @@ void mesh_init(mesh_t *mesh, const float *vertices, size_t vertex_size,
                vertex_buffer_layout_t *layout);
 
 void mesh_destroy(mesh_t *mesh);
+
+// Charge un modèle depuis un fichier .obj
+// Retourne true en cas de succès, false sinon.
+bool mesh_load_from_obj(mesh_t *mesh, const char *filepath);

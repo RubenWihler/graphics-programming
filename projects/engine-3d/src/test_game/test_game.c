@@ -140,64 +140,10 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    // Format : Pos(X, Y, Z), Norm(NX, NY, NZ), Tex(U, V)
-    const float vertex[] = {
-        // --- Face avant (Z = 1.0f) --- Normale = (0, 0, 1)
-        -1.0f, -1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f, 1.0f,
-
-        // --- Face arrière (Z = -1.0f) --- Normale = (0, 0, -1)
-        -1.0f, -1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   1.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,   0.0f,  0.0f, -1.0f,   1.0f, 1.0f,
-
-        // --- Face gauche (X = -1.0f) --- Normale = (-1, 0, 0)
-        -1.0f,  1.0f,  1.0f,  -1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,  -1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-        -1.0f, -1.0f, -1.0f,  -1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
-        -1.0f, -1.0f,  1.0f,  -1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-
-        // --- Face droite (X = 1.0f) --- Normale = (1, 0, 0)
-         1.0f,  1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,   1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
-
-        // --- Face bas (Y = -1.0f) --- Normale = (0, -1, 0)
-        -1.0f, -1.0f, -1.0f,   0.0f, -1.0f,  0.0f,   0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,   0.0f, -1.0f,  0.0f,   1.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,   0.0f, -1.0f,  0.0f,   1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,   0.0f, -1.0f,  0.0f,   0.0f, 1.0f,
-
-        // --- Face haut (Y = 1.0f) --- Normale = (0, 1, 0)
-        -1.0f,  1.0f, -1.0f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,   0.0f,  1.0f,  0.0f,   0.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,   0.0f,  1.0f,  0.0f,   1.0f, 1.0f
-    };
-
-    const unsigned int indices[] = {
-        0,  1,  2,      2,  3,  0,  // avant
-        4,  5,  6,      6,  7,  4,  // arrière
-        8,  9,  10,     10, 11, 8,  // gauche
-        12, 13, 14,     14, 15, 12, // droite
-        16, 17, 18,     18, 19, 16, // bas
-        20, 21, 22,     22, 23, 20  // haut
-    };
-
-    // Layout
-    vertex_buffer_layout_t layout;
-    vertex_buffer_layout_init(&layout);
-    vertex_buffer_layout_push_float(&layout, 3); // position
-    vertex_buffer_layout_push_float(&layout, 3); // Normale
-    vertex_buffer_layout_push_float(&layout, 2); // UVs
-
-    // Mesh
-    int index_count = sizeof(indices) / sizeof(indices[0]);
-    mesh_init(&tg->cube_mesh, vertex, sizeof(vertex), indices, index_count, &layout);
+    // C'est quand même plus propre qu'un tableau de 200 lignes !
+    if (!mesh_load_from_obj(&tg->cube_mesh, "res/models/tree.obj")) {
+        LOG_ERROR("Impossible de charger le modele 3D", true);
+    }
 
     // Transform
     transform_init(&tg->cube_transform);
@@ -205,15 +151,13 @@ static void test_game_start(game_t *game)
     tg->cube_transform.position[0] = 0.0f; 
 
     // Texture
-    texture_init(&tg->texture, "res/textures/diamond.png");
+    texture_init(&tg->texture, "res/textures/tree.png");
     texture_bind(&tg->texture, &(uint){0});
 
     // Shader
     shader_init(&tg->shader, "res/shaders/default");
     shader_bind(&tg->shader);
 
-
-    // ... bind texture et draw ...
 
     // #define SHINYING_COLOR 1.0f, 1.0f, 1.0f, 1.0f
     // shader_set_uniform(&tg->shader, "u_time", 0.0);
@@ -248,9 +192,9 @@ static void test_game_update(game_t *game, float delta_time)
     cam_persp_controller_update(&tg->cam_ctrl, delta_time);
 
     // Faire tourner le cube via son transform (sur l'axe Y et Z par exemple)
-    float rotation_speed = 1.0f;
-    tg->cube_transform.rotation[1] += rotation_speed * delta_time; // Rotation Y
-    tg->cube_transform.rotation[2] += (rotation_speed * 0.5f) * delta_time; // Rotation Z
+    // float rotation_speed = 1.0f;
+    // tg->cube_transform.rotation[1] += rotation_speed * delta_time; // Rotation Y
+    // tg->cube_transform.rotation[2] += (rotation_speed * 0.5f) * delta_time; // Rotation Z
 
     //modifie la valeur temps du shader
     if(tg->time > 2 * M_PI) tg->time = 0;
@@ -265,7 +209,7 @@ static void test_game_render(game_t *game)
     shader_bind(&tg->shader);
 
     // --- VARIABLES D'ÉCLAIRAGE ---
-    vec3 light_pos = {2.0f, 3.0f, 2.0f}; 
+    vec3 light_pos = {50.0f, 100.0f, 2.0f}; 
     vec3 light_color = {1.0f, 1.0f, 1.0f}; 
     vec3 view_pos;
     glm_vec3_copy(tg->cam_ctrl.cam.position, view_pos);

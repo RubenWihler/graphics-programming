@@ -27,14 +27,17 @@
 
     #define LOG_ERROR(msg, interrupt) log_error(msg, __func__, __FILE__, __LINE__, interrupt)
 
+    #define LOG_INFO(msg) log_info(msg)
 #else
     #define ASSERT_GL_BEGIN() ;
     #define ASSERT_GL_ERROR_OCCURED(msg) 0
     #define ASSERT_GL(msg) ;
     #define ASSERT_GL_CALL(func) func
     #define LOG_ERROR(msg, interrupt) ;
+    #define LOG_INFO(msg) ;
 #endif
 
+void log_info(char* msg);
 void log_error(char* msg, const char* func, const char* file, const int line, bool interrupt);
 int log_gl_error_all(const char* func, const char* file, const int line, bool interrupt);
 

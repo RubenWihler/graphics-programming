@@ -17,6 +17,11 @@ void log_error(char* msg, const char* func, const char* file, const int line, bo
     if(interrupt) raise(SIGINT);
 }
 
+void log_info(char* msg)
+{
+    fprintf(stdout, "[INFO]: %s\n", msg);
+}
+
 int log_gl_error_all(const char* func, const char* file, const int line, bool interrupt)
 {
     int count = 0;
