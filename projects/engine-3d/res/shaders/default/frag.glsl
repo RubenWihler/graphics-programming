@@ -6,13 +6,12 @@ in vec3 v_FragPos;
 in vec3 v_Normal;
 in vec2 v_TexCoord;
 
-// La fameuse structure !
 struct Material {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     float shininess;
-    
+
     sampler2D diffuse_map;
     int has_diffuse_map; // 1 = oui, 0 = non
 };
@@ -31,13 +30,18 @@ void main()
     } else {
         albedo = u_material.diffuse;
     }
+    
+    // --- LUMIÈRE DIRECTIONNELLE (Type Soleil) ---
+    // Au lieu d'une position, on donne une DIRECTION fixe pour la lumière
+    // (Par exemple, la lumière vient d'en haut à droite et légèrement de face)
+    // vec3 lightDir = normalize(vec3(1.0, 1.0, 0.5));
 
     vec3 norm = normalize(v_Normal);
     vec3 lightDir = normalize(u_lightPos - v_FragPos);
     vec3 viewDir = normalize(u_viewPos - v_FragPos);
 
     // --- 2. Ambiante ---
-    vec3 ambient = u_lightColor * u_material.ambient * albedo;
+    vec3 ambient = u_lightColor * u_material.ambient * albedo * 0.5;
 
     // --- 3. Diffuse ---
     float diff = max(dot(norm, lightDir), 0.0);

@@ -13,3 +13,5 @@ obj
 
 # Ignore binary files in /bin/
 bin
+
+res/models/kayle.obj

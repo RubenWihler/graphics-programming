@@ -1,34 +1,16 @@
-#include "test_game/test_game.h"
-#include "gllib/game/game.h"
+#include "game/test_game/test_game.h"
+#include "game/api/game.h"
 
 int main()
 {
     test_game_config_t config = {
         .game_config = DEFAULT_GAME_CONFIG,
-        .particle = {
-            .particle_emmision_rate = 500,
-            .particle_capacity = 1 << 20,
-            .particle_props = {
-                .vel = {0.0f, 0.0f},
-                .vel_variation = {-10.0f, 10.0f},
-                .vel_circular = false,
-
-                .color_start = {1.0f, 0.76f, 0.17f, 0.5f},
-                .color_end = {0.53f, 0.167f, 1.0f, 0.0f},
-                .color_variation = {0.0f, 0.0f, 0.0f, 1.0f},
-
-                .rotation = 0.0f,
-                .rotation_variation = 0.0f,
-                .rotation_speed = 0.1f,
-                .rotation_speed_variation = 10.0f,
-
-                .size_start = 1.0f,
-                .size_end = 1.0f,
-                .size_variation = 5.0f,
-
-                .life_time = 3.0f,
-                .life_time_variation = 0.0f
-            }
+        .camera_ctrl = {
+            .movement_speed = 6.7f,
+            .mouse_sensitivity = 0.1f,
+            .fov_deg = 45.0f,
+            .near_z = 0.1f,
+            .far_z = 100.0f
         }
     };
 
