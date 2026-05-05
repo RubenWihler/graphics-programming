@@ -44,56 +44,88 @@ typedef struct {
 // -----------------------------------------------------------------------------
 // La fonction de chargement principale
 // -----------------------------------------------------------------------------
-bool mesh_load_from_obj(mesh_t *mesh, const char *filepath) {
+bool model_load_from_obj(model_t *model, const char *filepath, const char *base_dir) {
     tinyobj_attrib_t attrib;
     tinyobj_shape_t* shapes = NULL;
     size_t num_shapes;
-    tinyobj_material_t* materials = NULL;
+    tinyobj_material_t* tiny_materials = NULL;
     size_t num_materials;
 
-    // Demande à tinyobj de forcer les faces en triangles
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-    int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials, &num_materials, 
+    int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &tiny_materials, &num_materials, 
                                 filepath, get_file_data, NULL, flags);
 
     if (ret != TINYOBJ_SUCCESS) {
-        LOG_ERROR("Erreur lors du chargement du fichier OBJ : %s", filepath);
+        char errmsg[255];
+        memset(errmsg, 0, 255);
+        sprintf(errmsg, "Erreur chargement OBJ : %s !\n", filepath);
+        LOG_ERROR(errmsg, false);
         return false;
     }
 
-    // --- 1. Préparation des buffers finaux ---
-    // Au pire des cas, chaque face a 3 sommets totalement uniques.
-    // Chaque sommet fait 8 floats (3 pos + 3 norm + 2 uv).
-    size_t max_vertices = attrib.num_faces * 3; 
-    float* final_vertices = (float*)malloc(max_vertices * 8 * sizeof(float));
-    unsigned int* final_indices = (unsigned int*)malloc(max_vertices * sizeof(unsigned int));
-    
-    size_t vertex_cursor = 0; // Pointeur dans le tableau des floats
-    size_t index_count = 0;   // Nombre total d'indices
+    // --- 1. CHARGEMENT DES MATERIAUX ---
+    model->material_count = num_materials;
+    if (num_materials > 0) {
+        model->materials = (material_t*)calloc(num_materials, sizeof(material_t));
+        
+        for (size_t i = 0; i < num_materials; i++) {
+            material_init_default(&model->materials[i]);
+            if (tiny_materials[i].name) strncpy(model->materials[i].name, tiny_materials[i].name, 63);
+            
+            glm_vec3_copy(tiny_materials[i].ambient, model->materials[i].ambient);
+            glm_vec3_copy(tiny_materials[i].diffuse, model->materials[i].diffuse);
+            glm_vec3_copy(tiny_materials[i].specular, model->materials[i].specular);
+            model->materials[i].shininess = tiny_materials[i].shininess;
 
-    // --- 2. Préparation de la table de hachage ---
-    size_t hash_table_size = max_vertices;
-    int* hash_table = (int*)malloc(hash_table_size * sizeof(int));
-    for (size_t i = 0; i < hash_table_size; i++) hash_table[i] = -1;
-    
-    vertex_key_t* keys = (vertex_key_t*)malloc(max_vertices * sizeof(vertex_key_t));
-    unsigned int num_unique_vertices = 0;
+            // Si le matériau a une texture, on prépare le chargement
+            if (tiny_materials[i].diffuse_texname != NULL) {
+                char full_tex_path[512];
+                snprintf(full_tex_path, sizeof(full_tex_path), "%s%s", base_dir, tiny_materials[i].diffuse_texname);
+                
+                model->materials[i].diffuse_map = (texture_t*)malloc(sizeof(texture_t));
+                if (!texture_init(model->materials[i].diffuse_map, full_tex_path)) {
+                    LOG_ERROR("Impossible de charger la texture : %s", full_tex_path);
+                    free(model->materials[i].diffuse_map);
+                    model->materials[i].diffuse_map = NULL;
+                }
+            }
+        }
+    }
 
-    // --- 3. Parcours des géométries ---
+    // --- 2. DÉCOUPAGE EN SUBMESHES PAR MATÉRIAU ---
+    // Pour simplifier drastiquement, on va créer un submesh par 'shape' du fichier .obj.
+    // (Dans Blender, chaque objet séparé ou chaque matériau séparé exporte généralement une 'shape' distincte).
+    model->submesh_count = num_shapes;
+    model->submeshes = (submesh_t*)calloc(num_shapes, sizeof(submesh_t));
+
     for (size_t i = 0; i < num_shapes; i++) {
-        // Au lieu de f = 0, on commence au face_offset de cette shape
-        // Et on s'arrête après avoir lu 'length' faces.
         size_t offset = shapes[i].face_offset;
         size_t length = shapes[i].length;
 
-        // Note: Dans tinyobjloader-c, attrib.faces contient tous les sommets de toutes les faces (triangulées)
-        // Donc on boucle sur les indices globaux. Chaque face triangulée a 3 sommets.
+        // Quel est le matériau de cette shape ? (On regarde le mat_id de la première face)
+        int mat_id = -1;
+        if (attrib.material_ids && length > 0) {
+            mat_id = attrib.material_ids[offset];
+        }
+        model->submeshes[i].material_index = mat_id;
+
+        // Préparation des buffers temporaires pour ce submesh
+        size_t max_vertices = length * 3; 
+        float* final_vertices = (float*)malloc(max_vertices * 8 * sizeof(float));
+        unsigned int* final_indices = (unsigned int*)malloc(max_vertices * sizeof(unsigned int));
+        size_t vertex_cursor = 0, index_count = 0;
+
+        // Reset de la hashmap pour CE submesh
+        size_t hash_table_size = max_vertices;
+        int* hash_table = (int*)malloc(hash_table_size * sizeof(int));
+        for (size_t h = 0; h < hash_table_size; h++) hash_table[h] = -1;
+        vertex_key_t* keys = (vertex_key_t*)malloc(max_vertices * sizeof(vertex_key_t));
+        unsigned int num_unique_vertices = 0;
+
+        // Extraction des faces pour CE submesh
         for (size_t f = 0; f < length * 3; f++) {
-            
-            // On récupère l'index global depuis attrib !
             tinyobj_vertex_index_t idx = attrib.faces[offset * 3 + f];
 
-            // Fonction de hachage spatiale
             unsigned int hash = ((unsigned int)idx.v_idx * 73856093 ^ 
                                  (unsigned int)idx.vt_idx * 19349663 ^ 
                                  (unsigned int)idx.vn_idx * 83492791) % hash_table_size;
@@ -102,105 +134,93 @@ bool mesh_load_from_obj(mesh_t *mesh, const char *filepath) {
             bool found = false;
             unsigned int final_index = 0;
 
-            // Cherche si cette combinaison exacte de sommets/uv/normale existe déjà
             while (key_idx != -1) {
-                if (keys[key_idx].v_idx == idx.v_idx &&
-                    keys[key_idx].vt_idx == idx.vt_idx &&
-                    keys[key_idx].vn_idx == idx.vn_idx) {
-                    found = true;
-                    final_index = keys[key_idx].new_index;
-                    break;
+                if (keys[key_idx].v_idx == idx.v_idx && keys[key_idx].vt_idx == idx.vt_idx && keys[key_idx].vn_idx == idx.vn_idx) {
+                    found = true; final_index = keys[key_idx].new_index; break;
                 }
                 key_idx = keys[key_idx].next_hash;
             }
 
             if (!found) {
-                // C'est un sommet inédit ! On l'enregistre.
                 final_index = num_unique_vertices++;
+                keys[final_index].v_idx = idx.v_idx; keys[final_index].vt_idx = idx.vt_idx; keys[final_index].vn_idx = idx.vn_idx;
+                keys[final_index].new_index = final_index; keys[final_index].next_hash = hash_table[hash]; hash_table[hash] = final_index;
 
-                // 1. Sauvegarde dans la table de hachage
-                keys[final_index].v_idx = idx.v_idx;
-                keys[final_index].vt_idx = idx.vt_idx;
-                keys[final_index].vn_idx = idx.vn_idx;
-                keys[final_index].new_index = final_index;
-                keys[final_index].next_hash = hash_table[hash];
-                hash_table[hash] = final_index;
-
-                // 2. Extraction des Positions (Attention : idx.v_idx est garanti d'être valide)
+                // Pos
                 final_vertices[vertex_cursor++] = attrib.vertices[3 * idx.v_idx + 0];
                 final_vertices[vertex_cursor++] = attrib.vertices[3 * idx.v_idx + 1];
                 final_vertices[vertex_cursor++] = attrib.vertices[3 * idx.v_idx + 2];
-
-                // 3. Extraction des Normales (si présentes, sinon 0,1,0 par défaut)
+                // Norm
                 if (idx.vn_idx >= 0) {
                     final_vertices[vertex_cursor++] = attrib.normals[3 * idx.vn_idx + 0];
                     final_vertices[vertex_cursor++] = attrib.normals[3 * idx.vn_idx + 1];
                     final_vertices[vertex_cursor++] = attrib.normals[3 * idx.vn_idx + 2];
-                } else {
-                    final_vertices[vertex_cursor++] = 0.0f; 
-                    final_vertices[vertex_cursor++] = 1.0f;
-                    final_vertices[vertex_cursor++] = 0.0f;
-                }
-
-                // 4. Extraction des UVs (si présentes, sinon 0,0 par défaut)
+                } else { final_vertices[vertex_cursor++] = 0; final_vertices[vertex_cursor++] = 1; final_vertices[vertex_cursor++] = 0; }
+                // UV (inversé pour OpenGL)
                 if (idx.vt_idx >= 0) {
                     final_vertices[vertex_cursor++] = attrib.texcoords[2 * idx.vt_idx + 0];
-                    // IMPORTANT : En OpenGL, les coordonnées Y de textures sont souvent inversées
-                    // Si ta texture s'affiche à l'envers, remplace la ligne en dessous par : 
-                    // 1.0f - attrib.texcoords[2 * idx.vt_idx + 1];
-                    final_vertices[vertex_cursor++] = attrib.texcoords[2 * idx.vt_idx + 1];
-                } else {
-                    final_vertices[vertex_cursor++] = 0.0f;
-                    final_vertices[vertex_cursor++] = 0.0f;
-                }
+                    final_vertices[vertex_cursor++] = 1.0f - attrib.texcoords[2 * idx.vt_idx + 1]; // <--- Inversion Y classique
+                } else { final_vertices[vertex_cursor++] = 0; final_vertices[vertex_cursor++] = 0; }
             }
-
-            // On ajoute l'index au IBO final !
             final_indices[index_count++] = final_index;
         }
+
+        // --- 3. Création des Buffers OpenGL pour ce Submesh ---
+        vertex_buffer_layout_t layout;
+        vertex_buffer_layout_init(&layout);
+        vertex_buffer_layout_push_float(&layout, 3); // Pos
+        vertex_buffer_layout_push_float(&layout, 3); // Norm
+        vertex_buffer_layout_push_float(&layout, 2); // UV
+
+        vertex_array_init(&model->submeshes[i].vao);
+        vertex_buffer_init(&model->submeshes[i].vbo, final_vertices, vertex_cursor * sizeof(float), false);
+        vertex_array_add_buffer(&model->submeshes[i].vao, &model->submeshes[i].vbo, &layout);
+        index_buffer_init(&model->submeshes[i].ibo, final_indices, index_count, false);
+
+        free(final_vertices); free(final_indices); free(hash_table); free(keys);
     }
 
-    // --- 4. Envoi à OpenGL ---
-    vertex_buffer_layout_t layout;
-    vertex_buffer_layout_init(&layout);
-    vertex_buffer_layout_push_float(&layout, 3); // Pos
-    vertex_buffer_layout_push_float(&layout, 3); // Norm
-    vertex_buffer_layout_push_float(&layout, 2); // UV
-
-    size_t vertex_bytes = vertex_cursor * sizeof(float);
-    
-    // Appel de ta fonction d'initialisation de mesh
-    mesh_init(mesh, final_vertices, vertex_bytes, final_indices, index_count, &layout);
-
-    // --- 5. Nettoyage de la RAM ---
-    free(final_vertices);
-    free(final_indices);
-    free(hash_table);
-    free(keys);
+    // Nettoyage tinyobj
     tinyobj_attrib_free(&attrib);
     if (shapes) tinyobj_shapes_free(shapes, num_shapes);
-    if (materials) tinyobj_materials_free(materials, num_materials);
+    if (tiny_materials) tinyobj_materials_free(tiny_materials, num_materials);
 
-    // LOG_INFO("Modele OBJ charge avec succes : %s (%u sommets uniques, %zu triangles)\n", 
-    //          filepath, num_unique_vertices, index_count / 3);
+    printf("[OBJ-LOADER]: Modele MULTI-MATERIAUX charge: %s (%zu submeshes)", filepath, num_shapes);
 
     return true;
 }
 
-void mesh_init(mesh_t *mesh, const float *vertices, size_t vertex_size, 
-               const unsigned int *indices, size_t index_count, 
-               vertex_buffer_layout_t *layout) 
+void model_destroy(model_t *model)
 {
-    vertex_array_init(&mesh->vao);
-    vertex_buffer_init(&mesh->vbo, vertices, vertex_size, false);
+    for (size_t i = 0; i < model->submesh_count; i++){
+        submesh_t mesh = model->submeshes[i];
+        index_buffer_destroy(&mesh.ibo);
+        vertex_buffer_destroy(&mesh.vbo);
+        vertex_array_destroy(&mesh.vao);
+    }
 
-    vertex_array_add_buffer(&mesh->vao, &mesh->vbo, layout);
+    for (size_t i = 0; i < model->material_count; i++){
+        material_t mat = model->materials[i];
 
-    index_buffer_init(&mesh->ibo, indices, index_count, false);
+        if (mat.diffuse_map) texture_destroy(mat.diffuse_map);
+    }
+
 }
 
-void mesh_destroy(mesh_t *mesh) {
-    index_buffer_destroy(&mesh->ibo);
-    vertex_buffer_destroy(&mesh->vbo);
-    vertex_array_destroy(&mesh->vao);
-}
+// void mesh_init(mesh_t *mesh, const float *vertices, size_t vertex_size, 
+//                const unsigned int *indices, size_t index_count, 
+//                vertex_buffer_layout_t *layout) 
+// {
+//     vertex_array_init(&mesh->vao);
+//     vertex_buffer_init(&mesh->vbo, vertices, vertex_size, false);
+//
+//     vertex_array_add_buffer(&mesh->vao, &mesh->vbo, layout);
+//
+//     index_buffer_init(&mesh->ibo, indices, index_count, false);
+// }
+//
+// void mesh_destroy(mesh_t *mesh) {
+//     index_buffer_destroy(&mesh->ibo);
+//     vertex_buffer_destroy(&mesh->vbo);
+//     vertex_array_destroy(&mesh->vao);
+// }

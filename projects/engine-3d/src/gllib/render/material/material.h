@@ -4,12 +4,18 @@
 #include "../texture/texture.h"
 
 typedef struct {
-    vec3 ambient;    // Couleur ambiante (souvent la même que diffuse)
-    vec3 diffuse;    // Couleur de base sous la lumière
-    vec3 specular;   // Couleur du reflet (blanc pour le plastique, coloré pour les métaux)
-    float shininess; // Taille du reflet (ex: 32 = large, 128 = petit et concentré)
+    char name[64]; // Nom du matériau (utile pour le debug)
 
-    texture_t *diffuse_map; // Pointeur optionnel vers une texture
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+
+    // Chemins vers les textures (pour pouvoir les charger)
+    char diffuse_texname[256];
+    texture_t *diffuse_map; // Le pointeur vers la texture une fois chargée
+
+    // On pourrait ajouter spec_map, bump_map, etc. plus tard
 } material_t;
 
 // Petite fonction utilitaire pour initialiser un matériau par défaut (gris mat)

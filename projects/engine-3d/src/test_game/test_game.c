@@ -39,7 +39,7 @@ struct _test_game_t {
     cam_persp_controller_t cam_ctrl;
 
     //objet 1 : arbre
-    mesh_t mesh;
+    model_t model;
     transform_t transform;
     material_t gold_mat;
     texture_t texture;
@@ -141,18 +141,19 @@ static void test_game_start(game_t *game)
     printf("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    // C'est quand même plus propre qu'un tableau de 200 lignes !
-    if (!mesh_load_from_obj(&tg->mesh, "res/models/tree.obj")) {
+    // Charge le model
+    if (!model_load_from_obj(&tg->model, "res/models/moon.obj", "res/models/")) {
         LOG_ERROR("Impossible de charger le modele 3D", true);
     }
 
     // Transform
     transform_init(&tg->transform);
     tg->transform.position[0] = 0.0f;
+    glm_vec3_scale(tg->transform.scale, 50.0, tg->transform.scale);
 
     // Texture
-    texture_init(&tg->texture, "res/textures/tree.png");
-    texture_bind(&tg->texture, &(uint){0});
+    // texture_init(&tg->texture, "res/textures/tree.png");
+    // texture_bind(&tg->texture, &(uint){0});
 
     // Shader
     shader_init(&tg->shader, "res/shaders/default");
@@ -224,21 +225,11 @@ static void test_game_render(game_t *game)
     shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
     shader_set_uniform_vec3(&tg->shader, "u_viewPos", view_pos);
 
-    // uint32_t slot = 0;
-    // texture_bind(&tg->texture, &slot);
-    // shader_set_uniform(&tg->shader, "u_texture", 0);
-
     mat4 model_matrix;
     transform_get_matrix(&tg->transform, model_matrix);
     shader_set_uniform(&tg->shader, "u_model", &model_matrix[0]);
 
-    renderer_draw(
-        &tg->renderer,
-        &tg->mesh.vao,
-        &tg->mesh.ibo,
-        &tg->shader,
-        &tg->gold_mat
-    );
+    renderer_draw_model(&tg->renderer, &tg->model, &tg->shader);
 
     renderer_end_scene(&tg->renderer);
 }
@@ -247,12 +238,10 @@ static void test_game_clean(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    mesh_destroy(&tg->mesh);
+    model_destroy(&tg->model);
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
-
     renderer_destroy(&tg->renderer);
-    // cam_ortho_controller_destroy(&tg->cam_controller);
 }
 
 
