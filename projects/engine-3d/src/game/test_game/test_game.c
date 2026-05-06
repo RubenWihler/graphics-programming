@@ -67,20 +67,20 @@ static void test_game_start(game_t *game)
     LOG_INFO("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
+    int winw, winh;
+    glfwGetWindowSize(game->window, &winw, &winh);
+
     // --- CREATION DE LA CAMERA ---
     entity_t camera_ent = ecs_create_entity(&tg->registry);
-    
+    //transform
     transform_t cam_t;
     transform_init(&cam_t);
     ecs_add_component(&tg->registry, camera_ent, COMP_TRANSFORM, &cam_t);
-
-    int winw, winh;
-    glfwGetWindowSize(game->window, &winw, &winh);
-    
+    //cam
     camera_component_t cam;
     camera_component_init(&cam, tg->config.camera_ctrl.fov_deg, (float)winw / winh, tg->config.camera_ctrl.near_z, tg->config.camera_ctrl.far_z);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA, &cam);
-
+    //cam controller
     camera_controller_component_t cam_ctrl;
     camera_controller_init(&cam_ctrl, tg->config.camera_ctrl.movement_speed, tg->config.camera_ctrl.mouse_sensitivity);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
@@ -103,6 +103,7 @@ static void test_game_start(game_t *game)
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
     tg->gold_mat.diffuse_map = &tg->texture;
 
+    //Charger le model que vont partager les entitee (ici en attendant de faire l'asset manager)
     model_load_from_obj(&tg->model, "res/models/sphere.obj", "res/models/");
 
     for (size_t i = 0; i < 10000; i++){
@@ -120,6 +121,8 @@ static void test_game_start(game_t *game)
         // 3. Ajout du Mesh
         mesh_component_t m;
         m.model = &tg->model;
+
+        //materiel override
         m.use_material_override = true;
         m.material_override = tg->gold_mat; // Ton matériau doré
 
