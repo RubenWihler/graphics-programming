@@ -85,6 +85,8 @@ static void test_game_start(game_t *game)
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
     tg->gold_mat.diffuse_map = &tg->texture;
 
+    model_load_from_obj(&tg->model, "res/models/sphere.obj", "res/models/");
+
     for (size_t i = 0; i < 10000; i++){
         // 2. Création de l'Entité "Lune"
         entity_t moon = ecs_create_entity(&tg->registry);
@@ -100,7 +102,6 @@ static void test_game_start(game_t *game)
         // 4. Ajout du Mesh
         mesh_component_t m;
         m.model = &tg->model;
-        model_load_from_obj(m.model, "res/models/sphere.obj", "res/models/");
         m.use_material_override = true;
         m.material_override = tg->gold_mat; // Ton matériau doré
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
