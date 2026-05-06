@@ -17,16 +17,17 @@
 #include "../../core/render/shader/shader.h"
 #include "../../core/render/texture/texture.h"
 #include "../../core/render/renderer/renderer.h"
-#include "../../core/render/camera/cam_persp.h"
-#include "../../engine/camera_controller/cam_persp_controller.h"
 #include "../../core/math/transform/transform.h"
 #include "../../core/render/mesh/mesh.h"
 
 #include "../../core/ecs/ecs.h"
 #include "../../engine/components/c_mesh.h"
+#include "../../engine/components/c_camera.h"
+#include "../../engine/components/c_camera_controller.h"
 #include "../../engine/components/components.h"
 #include "../../engine/systems/s_render.h"
 #include "../../engine/systems/s_rotator.h"
+#include "../../engine/systems/s_camera_controller.h"
 
 struct _test_game_t {
     game_t game;
@@ -35,7 +36,6 @@ struct _test_game_t {
     ecs_registry_t registry;
     input_manager_t input_manager;
     renderer_t renderer;
-    cam_persp_controller_t cam_ctrl;
 
     //objet 1
     shader_t shader;
@@ -67,6 +67,24 @@ static void test_game_start(game_t *game)
     LOG_INFO("%s\n", __func__);
     test_game_t *tg = container_of(game, test_game_t, game);
 
+    // --- CREATION DE LA CAMERA ---
+    entity_t camera_ent = ecs_create_entity(&tg->registry);
+    
+    transform_t cam_t;
+    transform_init(&cam_t);
+    ecs_add_component(&tg->registry, camera_ent, COMP_TRANSFORM, &cam_t);
+
+    int winw, winh;
+    glfwGetWindowSize(game->window, &winw, &winh);
+    
+    camera_component_t cam;
+    camera_component_init(&cam, tg->config.camera_ctrl.fov_deg, (float)winw / winh, tg->config.camera_ctrl.near_z, tg->config.camera_ctrl.far_z);
+    ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA, &cam);
+
+    camera_controller_component_t cam_ctrl;
+    camera_controller_init(&cam_ctrl, tg->config.camera_ctrl.movement_speed, tg->config.camera_ctrl.mouse_sensitivity);
+    ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
+
     // Shader
     shader_init(&tg->shader, "res/shaders/default");
     //si le shader a besoin d'uniforms additionnel:
@@ -88,10 +106,10 @@ static void test_game_start(game_t *game)
     model_load_from_obj(&tg->model, "res/models/sphere.obj", "res/models/");
 
     for (size_t i = 0; i < 10000; i++){
-        // 2. Création de l'Entité "Lune"
+        // 1. Création de l'Entité
         entity_t moon = ecs_create_entity(&tg->registry);
 
-        // 3. Ajout du Transform
+        // 2. Ajout du Transform
         transform_t t;
         transform_init(&t);
         t.position[0] = ((float)(rand() % 100) - 50.0f);
@@ -99,11 +117,12 @@ static void test_game_start(game_t *game)
         t.position[2] = ((float)(rand() % 100) - 50.0f);
         ecs_add_component(&tg->registry, moon, COMP_TRANSFORM, &t);
 
-        // 4. Ajout du Mesh
+        // 3. Ajout du Mesh
         mesh_component_t m;
         m.model = &tg->model;
         m.use_material_override = true;
         m.material_override = tg->gold_mat; // Ton matériau doré
+
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
     }
 }
@@ -113,36 +132,53 @@ static void test_game_update(game_t *game, float delta_time)
     (void)delta_time;
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    cam_persp_controller_update(&tg->cam_ctrl, delta_time);
-
     // Faire tourner un objet via son transform (sur l'axe Y et Z par exemple)
     s_rotator_update(&tg->registry, 1.0f, delta_time);
-
-    //
-    // float rotation_speed = 1.0f;
-    // tg->cube_transform.rotation[1] += rotation_speed * delta_time; // Rotation Y
-    // tg->cube_transform.rotation[2] += (rotation_speed * 0.5f) * delta_time; // Rotation Z
+    s_camera_controller_update(&tg->registry, &tg->input_manager, delta_time);
 }
 
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
-    renderer_begin_scene(&tg->renderer, &tg->cam_ctrl.cam);
 
-    // --- VARIABLES D'ÉCLAIRAGE ---
-    vec3 light_pos = {0.0f, 0.0f, 0.0f}; 
-    vec3 light_color = {1.0f, 1.0f, 1.0f}; 
-    vec3 view_pos;
-    glm_vec3_copy(tg->cam_ctrl.cam.position, view_pos);
+    // 1. Chercher la camera active
+    camera_component_t* active_cam = NULL;
+    transform_t* active_cam_t = NULL;
+
+    signature_t cam_sig = (1 << COMP_TRANSFORM) | (1 << COMP_CAMERA);
+    for (entity_t e = 0; e < MAX_ENTITIES; e++) {
+        if ((tg->registry.signatures[e] & cam_sig) == cam_sig) {
+            camera_component_t* c = ecs_get_component(&tg->registry, e, COMP_CAMERA);
+            if (c && c->is_active) {
+                active_cam = c;
+                active_cam_t = (transform_t*)ecs_get_component(&tg->registry, e, COMP_TRANSFORM);
+                break; // On a trouve !
+            }
+        }
+    }
+
+    if (!active_cam) return; // Pas de camera, on ne dessine rien !
+    
+    //Envoyer les infos au renderer
+    renderer_begin_scene(&tg->renderer, &active_cam->view_matrix, &active_cam->projection_matrix);
+
+    // Variables d'eclairage (on recupere la position du transform de la camera)
+    vec3 light_pos = {0.0f, 0.0f, 0.0f};
+    vec3 light_color = {1.0f, 1.0f, 1.0f};
+
     shader_bind(&tg->shader);
     shader_set_uniform_vec3(&tg->shader, "u_lightPos", light_pos);
     shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
-    shader_set_uniform_vec3(&tg->shader, "u_viewPos", view_pos);
+    shader_set_uniform_vec3(&tg->shader, "u_viewPos", active_cam_t->position);
+    
+    // Le Shader a aussi besoin des matrices View et Projection !
+    shader_set_uniform_mat4(&tg->shader, "u_view", active_cam->view_matrix);
+    shader_set_uniform_mat4(&tg->shader, "u_projection", active_cam->projection_matrix);
 
+    // 3. Dessiner la scene
     s_render_update(&tg->registry, &tg->renderer, &tg->shader);
 
-    renderer_end_scene(&tg->renderer);
-}
+    renderer_end_scene(&tg->renderer);}
 
 //s'execute avant le lancement du jeu
 static bool test_game_init(game_t *game)
@@ -152,6 +188,8 @@ static bool test_game_init(game_t *game)
     ecs_init(&tg->registry);
     ecs_register_component(&tg->registry, COMP_TRANSFORM, sizeof(transform_t));
     ecs_register_component(&tg->registry, COMP_MESH, sizeof(mesh_component_t));
+    ecs_register_component(&tg->registry, COMP_CAMERA, sizeof(camera_component_t));
+    ecs_register_component(&tg->registry, COMP_CAMERA_CONTROLLER, sizeof(camera_controller_component_t));
 
     // Input manager
     if(!input_manager_init(&tg->input_manager, game->window))
@@ -166,12 +204,6 @@ static bool test_game_init(game_t *game)
         LOG_ERROR("renderer initialization failed!");
         return false;
     }
-
-    // Camera Controller
-    int winw, winh;
-    glfwGetWindowSize(game->window, &winw, &winh);
-    float ratio = (float)winw / (float)winh;
-    cam_persp_controller_init(&tg->cam_ctrl, &tg->input_manager, ratio, tg->config.camera_ctrl);
 
     //game api (mapper les fonction de l'api)
     game->api.on_start = test_game_start;
@@ -229,10 +261,26 @@ static void test_game_clean(game_t *game)
 static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     test_game_t *tg = container_of(glfwGetWindowUserPointer(window), test_game_t, game);
-    glViewport(0, 0, width, height);
 
+    // 1. Chercher la camera active
+    camera_component_t* active_cam = NULL;
+
+    signature_t cam_sig = (1 << COMP_TRANSFORM) | (1 << COMP_CAMERA);
+    for (entity_t e = 0; e < MAX_ENTITIES; e++) {
+        if ((tg->registry.signatures[e] & cam_sig) == cam_sig) {
+            camera_component_t* c = ecs_get_component(&tg->registry, e, COMP_CAMERA);
+            if (c && c->is_active) {
+                active_cam = c;
+                break; // On a trouve !
+            }
+        }
+    }
+
+    if (!active_cam) return; // Pas de camera
+
+    glViewport(0, 0, width, height);
     float aspect_ratio = (float)width / (float)height;
-    cam_persp_controller_resize(&tg->cam_ctrl, aspect_ratio);
+    camera_component_resize(active_cam, aspect_ratio);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

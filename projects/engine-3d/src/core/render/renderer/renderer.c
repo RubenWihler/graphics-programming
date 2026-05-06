@@ -21,16 +21,10 @@ void renderer_destroy(renderer_t *renderer)
     renderer->data.view_mat = NULL;
 }
 
-void renderer_begin_scene_ortho(renderer_t *renderer, const cam_ortho_t *cam)
+void renderer_begin_scene(renderer_t *renderer, const mat4* view_mat, const mat4* proj_mat)
 {
-    renderer->data.proj_mat = (mat4*)&cam->proj;
-    renderer->data.view_mat = (mat4*)&cam->view;
-}
-
-void renderer_begin_scene_persp(renderer_t *renderer, const cam_persp_t *cam)
-{
-    renderer->data.proj_mat = (mat4*)&cam->proj;
-    renderer->data.view_mat = (mat4*)&cam->view;
+    renderer->data.proj_mat = (mat4*)proj_mat;
+    renderer->data.view_mat = (mat4*)view_mat;
 }
 
 void renderer_end_scene(__attribute__((unused))const renderer_t *renderer)
