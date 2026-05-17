@@ -18,9 +18,9 @@
 #include "../../core/render/texture/texture.h"
 #include "../../core/render/renderer/renderer.h"
 #include "../../core/math/transform/transform.h"
-#include "../../core/render/mesh/mesh.h"
 
 #include "../../core/ecs/ecs.h"
+#include "../../engine/assets/asset_manager.h"
 #include "../../engine/components/c_mesh.h"
 #include "../../engine/components/c_camera.h"
 #include "../../engine/components/c_camera_controller.h"
@@ -36,6 +36,7 @@ struct _test_game_t {
     ecs_registry_t registry;
     input_manager_t input_manager;
     renderer_t renderer;
+    asset_manager_t asset_manager;
 
     //objet 1
     shader_t shader;
@@ -44,9 +45,6 @@ struct _test_game_t {
     //on le fait a la main
     material_t gold_mat;
     texture_t texture;
-
-    //en attendant le ressource manager
-    model_t model;
 };
 
 //game api
@@ -72,15 +70,15 @@ static void test_game_start(game_t *game)
 
     // --- CREATION DE LA CAMERA ---
     entity_t camera_ent = ecs_create_entity(&tg->registry);
-    //transform
+
     transform_t cam_t;
     transform_init(&cam_t);
     ecs_add_component(&tg->registry, camera_ent, COMP_TRANSFORM, &cam_t);
-    //cam
+
     camera_component_t cam;
     camera_component_init(&cam, tg->config.camera_ctrl.fov_deg, (float)winw / winh, tg->config.camera_ctrl.near_z, tg->config.camera_ctrl.far_z);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA, &cam);
-    //cam controller
+
     camera_controller_component_t cam_ctrl;
     camera_controller_init(&cam_ctrl, tg->config.camera_ctrl.movement_speed, tg->config.camera_ctrl.mouse_sensitivity);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
@@ -91,26 +89,19 @@ static void test_game_start(game_t *game)
     // shader_bind(&tg->shader);
     // uniforms specifique...
 
-    // Charger texture manuelement
-    texture_init(&tg->texture, "res/models/moon_tex.png");
-    // texture_bind(&tg->texture, &(uint){0});
-
     // Material
     material_init_default(&tg->gold_mat);
     glm_vec3_copy((vec3){0.247f, 0.199f, 0.074f}, tg->gold_mat.ambient);
     glm_vec3_copy((vec3){0.751f, 0.606f, 0.226f}, tg->gold_mat.diffuse);
     glm_vec3_copy((vec3){0.628f, 0.555f, 0.366f}, tg->gold_mat.specular);
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
-    tg->gold_mat.diffuse_map = &tg->texture;
-
-    //Charger le model que vont partager les entitee (ici en attendant de faire l'asset manager)
-    model_load_from_obj(&tg->model, "res/models/sphere.obj", "res/models/");
+    tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
 
     for (size_t i = 0; i < 10000; i++){
-        // 1. Création de l'Entité
+        //Création de l'Entité
         entity_t moon = ecs_create_entity(&tg->registry);
 
-        // 2. Ajout du Transform
+        //Ajout du Transform
         transform_t t;
         transform_init(&t);
         t.position[0] = ((float)(rand() % 100) - 50.0f);
@@ -118,14 +109,11 @@ static void test_game_start(game_t *game)
         t.position[2] = ((float)(rand() % 100) - 50.0f);
         ecs_add_component(&tg->registry, moon, COMP_TRANSFORM, &t);
 
-        // 3. Ajout du Mesh
+        //Ajout du Mesh
         mesh_component_t m;
-        m.model = &tg->model;
-
-        //materiel override
+        m.model = asset_manager_get_model(&tg->asset_manager, "res/models/sphere.obj", "res/models/");
         m.use_material_override = true;
-        m.material_override = tg->gold_mat; // Ton matériau doré
-
+        m.material_override = tg->gold_mat;
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
     }
 }
@@ -208,6 +196,9 @@ static bool test_game_init(game_t *game)
         return false;
     }
 
+    // Assets Manager
+    asset_manager_init(&tg->asset_manager);
+
     //game api (mapper les fonction de l'api)
     game->api.on_start = test_game_start;
     game->api.on_stop = test_game_stop;
@@ -255,7 +246,7 @@ static void test_game_clean(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
 
-    model_destroy(&tg->model);
+    asset_manager_destroy(&tg->asset_manager);
     shader_destroy(&tg->shader);
     texture_destroy(&tg->texture);
     renderer_destroy(&tg->renderer);

@@ -37,3 +37,8 @@ void ecs_add_component(ecs_registry_t* registry, entity_t entity, int comp_id, c
 void ecs_remove_component(ecs_registry_t* registry, entity_t entity, int comp_id);
 void* ecs_get_component(ecs_registry_t* registry, entity_t entity, int comp_id);
 bool ecs_has_component(ecs_registry_t* registry, entity_t entity, int comp_id);
+
+//retourne l'id de la premiere entitee qui match la signature
+//renvoie MAX_ENTITIES si aucun match
+entity_t ecs_find_entity(ecs_registry_t *registry, signature_t sig);
+

@@ -1,5 +1,6 @@
 #include "ecs.h"
 #include "../../core/log/log.h"
+#include "component/component.h"
 #include <string.h>
 
 void ecs_init(ecs_registry_t* registry) {
@@ -116,3 +117,13 @@ bool ecs_has_component(ecs_registry_t* registry, entity_t entity, int comp_id) {
     // Renvoie true si le bit correspondant est à 1
     return (registry->signatures[entity] & (1 << comp_id)) != 0;
 }
+
+entity_t ecs_find_entity(ecs_registry_t *registry, signature_t sig) {
+    for (entity_t e = 0; e < MAX_ENTITIES; e++)
+        if ((registry->signatures[e] & sig) == sig)
+            return e;
+
+    LOG_WARNING("[ECS]: aucune entitee trouvee pour la signature: %d !\n");
+    return MAX_ENTITIES;
+}
+
