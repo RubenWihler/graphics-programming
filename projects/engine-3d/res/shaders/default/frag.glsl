@@ -17,13 +17,16 @@ struct Material {
 };
 
 uniform Material u_material;
-uniform vec3 u_lightPos;
 uniform vec3 u_viewPos;
-uniform vec3 u_lightColor;
+
+// --- MULTI-LUMIÈRES ---
+#define MAX_LIGHTS 8
+uniform int u_lightCount; // Combien de lumières sont réellement actives ?
+uniform vec3 u_lightPos[MAX_LIGHTS];
+uniform vec3 u_lightColor[MAX_LIGHTS];
 
 void main()
 {
-    // --- 1. Récupération de la couleur de base (Texture OU Couleur diffuse) ---
     vec3 albedo;
     if (u_material.has_diffuse_map == 1) {
         albedo = texture(u_material.diffuse_map, v_TexCoord).rgb;
@@ -31,28 +34,34 @@ void main()
         albedo = u_material.diffuse;
     }
     
-    // --- LUMIÈRE DIRECTIONNELLE (Type Soleil) ---
-    // Au lieu d'une position, on donne une DIRECTION fixe pour la lumière
-    // (Par exemple, la lumière vient d'en haut à droite et légèrement de face)
-    // vec3 lightDir = normalize(vec3(1.0, 1.0, 0.5));
-
     vec3 norm = normalize(v_Normal);
-    vec3 lightDir = normalize(u_lightPos - v_FragPos);
     vec3 viewDir = normalize(u_viewPos - v_FragPos);
 
-    // --- 2. Ambiante ---
-    vec3 ambient = u_lightColor * u_material.ambient * albedo * 0.5;
+    // Variables pour accumuler la lumière totale
+    vec3 total_ambient = vec3(0.0);
+    vec3 total_diffuse = vec3(0.0);
+    vec3 total_specular = vec3(0.0);
 
-    // --- 3. Diffuse ---
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = u_lightColor * diff * albedo;
+    // On boucle sur toutes les lumières envoyées par l'ECS
+    for(int i = 0; i < u_lightCount; i++) 
+    {
+        // Direction de cette lumière spécifique
+        vec3 lightDir = normalize(u_lightPos[i]); // Toujours directionnelle pour l'instant
 
-    // --- 4. Spéculaire ---
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float spec = pow(max(dot(norm, halfwayDir), 0.0), u_material.shininess);
-    vec3 specular = u_lightColor * spec * u_material.specular;  
+        // Ambiante
+        total_ambient += u_lightColor[i] * u_material.ambient * albedo * 0.2; // J'ai baissé à 0.2 pour éviter que ça sature vite
 
-    // Résultat
-    vec3 finalColor = ambient + diffuse + specular;
+        // Diffuse
+        float diff = max(dot(norm, lightDir), 0.0);
+        total_diffuse += u_lightColor[i] * diff * albedo;
+
+        // Spéculaire
+        vec3 halfwayDir = normalize(lightDir + viewDir);  
+        float spec = pow(max(dot(norm, halfwayDir), 0.0), u_material.shininess);
+        total_specular += u_lightColor[i] * spec * u_material.specular;  
+    }
+
+    // Résultat final
+    vec3 finalColor = total_ambient + total_diffuse + total_specular;
     color = vec4(finalColor, 1.0);
 };

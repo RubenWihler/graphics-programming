@@ -21,9 +21,6 @@
 
 #include "../../core/ecs/ecs.h"
 #include "../../engine/assets/asset_manager.h"
-#include "../../engine/components/c_mesh.h"
-#include "../../engine/components/c_camera.h"
-#include "../../engine/components/c_camera_controller.h"
 #include "../../engine/components/components.h"
 #include "../../engine/systems/s_render.h"
 #include "../../engine/systems/s_rotator.h"
@@ -97,6 +94,49 @@ static void test_game_start(game_t *game)
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
     tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
 
+
+    // 1. Soleil principal (Blanc/Jaune)
+    entity_t sun1 = ecs_create_entity(&tg->registry);
+    transform_t t1; transform_init(&t1);
+    t1.position[0] = 10.0f; t1.position[1] = 20.0f; t1.position[2] = 10.0f;
+    ecs_add_component(&tg->registry, sun1, COMP_TRANSFORM, &t1);
+    
+    light_component_t l1;
+    light_component_init(&l1, (vec3){0.4f, 0.9f, 0.5f}, 1.0f);
+    ecs_add_component(&tg->registry, sun1, COMP_LIGHT, &l1);
+
+    // 2. Éclairage d'ambiance (Lumière bleue venant de l'autre côté)
+    entity_t sun2 = ecs_create_entity(&tg->registry);
+    transform_t t2; transform_init(&t2);
+    t2.position[0] = -15.0f; t2.position[1] = 5.0f; t2.position[2] = -10.0f;
+    ecs_add_component(&tg->registry, sun2, COMP_TRANSFORM, &t2);
+    
+    light_component_t l2;
+    light_component_init(&l2, (vec3){0.2f, 0.2f, 1.0f}, 0.8f); // Bleue
+    ecs_add_component(&tg->registry, sun2, COMP_LIGHT, &l2);
+
+    // 3. (Optionnel) Une lumière rouge venant du bas (style lave)
+    entity_t sun3 = ecs_create_entity(&tg->registry);
+    transform_t t3; transform_init(&t3);
+    t3.position[0] = 0.0f; t3.position[1] = -20.0f; t3.position[2] = 0.0f;
+    ecs_add_component(&tg->registry, sun3, COMP_TRANSFORM, &t3);
+    
+    light_component_t l3;
+    light_component_init(&l3, (vec3){1.0f, 0.1f, 0.1f}, 0.5f); // Rouge
+    ecs_add_component(&tg->registry, sun3, COMP_LIGHT, &l3);
+
+    // entity_t sun = ecs_create_entity(&tg->registry);
+    // transform_t t;
+    // transform_init(&t);
+    // t.position[0] = 10.0f;
+    // t.position[1] = 20.0f; // La lumière vient d'en haut
+    // t.position[2] = 10.0f;    
+    // ecs_add_component(&tg->registry, sun, COMP_TRANSFORM, &t);
+    //
+    // light_component_t sun_light;
+    // light_component_init(&sun_light, (vec3){1.0f, 0.9f, 0.8f}, 1.2f);
+    // ecs_add_component(&tg->registry, sun, COMP_LIGHT, &sun_light);
+
     for (size_t i = 0; i < 10000; i++){
         //Création de l'Entité
         entity_t moon = ecs_create_entity(&tg->registry);
@@ -153,18 +193,9 @@ static void test_game_render(game_t *game)
     //Envoyer les infos au renderer
     renderer_begin_scene(&tg->renderer, &active_cam->view_matrix, &active_cam->projection_matrix);
 
-    // Variables d'eclairage (on recupere la position du transform de la camera)
-    vec3 light_pos = {0.0f, 0.0f, 0.0f};
-    vec3 light_color = {1.0f, 1.0f, 1.0f};
-
+    // envoiyer les matrices au shaders
     shader_bind(&tg->shader);
-    shader_set_uniform_vec3(&tg->shader, "u_lightPos", light_pos);
-    shader_set_uniform_vec3(&tg->shader, "u_lightColor", light_color);
     shader_set_uniform_vec3(&tg->shader, "u_viewPos", active_cam_t->position);
-    
-    // Le Shader a aussi besoin des matrices View et Projection !
-    shader_set_uniform_mat4(&tg->shader, "u_view", active_cam->view_matrix);
-    shader_set_uniform_mat4(&tg->shader, "u_projection", active_cam->projection_matrix);
 
     // 3. Dessiner la scene
     s_render_update(&tg->registry, &tg->renderer, &tg->shader);
@@ -181,6 +212,7 @@ static bool test_game_init(game_t *game)
     ecs_register_component(&tg->registry, COMP_MESH, sizeof(mesh_component_t));
     ecs_register_component(&tg->registry, COMP_CAMERA, sizeof(camera_component_t));
     ecs_register_component(&tg->registry, COMP_CAMERA_CONTROLLER, sizeof(camera_controller_component_t));
+    ecs_register_component(&tg->registry, COMP_LIGHT, sizeof(light_component_t));
 
     // Input manager
     if(!input_manager_init(&tg->input_manager, game->window))

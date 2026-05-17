@@ -23,6 +23,6 @@ void main()
     // En production, cette matrice mat3(transpose(inverse(u_model))) devrait être calculée sur le CPU pour des perfs optimales.
     mat3 normalMatrix = mat3(transpose(inverse(u_model)));
     v_Normal = normalMatrix * a_normal;
-
+    
     v_TexCoord = a_texCoord;
 };
