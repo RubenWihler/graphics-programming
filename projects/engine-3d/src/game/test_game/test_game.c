@@ -95,35 +95,35 @@ static void test_game_start(game_t *game)
     tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
 
 
-    // 1. Soleil principal (Blanc/Jaune)
-    entity_t sun1 = ecs_create_entity(&tg->registry);
-    transform_t t1; transform_init(&t1);
-    t1.position[0] = 10.0f; t1.position[1] = 20.0f; t1.position[2] = 10.0f;
-    ecs_add_component(&tg->registry, sun1, COMP_TRANSFORM, &t1);
+    // 1. Soleil de Nuit (très faible, bleuté pour faire "clair de lune")
+    entity_t sun = ecs_create_entity(&tg->registry);
+    transform_t t_sun; transform_init(&t_sun);
+    t_sun.position[0] = 0.5f; t_sun.position[1] = 1.0f; t_sun.position[2] = 0.5f;
+    ecs_add_component(&tg->registry, sun, COMP_TRANSFORM, &t_sun);
     
-    light_component_t l1;
-    light_component_init(&l1, (vec3){0.4f, 0.9f, 0.5f}, 1.0f);
-    ecs_add_component(&tg->registry, sun1, COMP_LIGHT, &l1);
+    light_component_t l_sun;
+    light_component_init_directional(&l_sun, (vec3){0.2f, 0.3f, 0.5f}, 0.2f); // Faible intensité !
+    ecs_add_component(&tg->registry, sun, COMP_LIGHT, &l_sun);
 
-    // 2. Éclairage d'ambiance (Lumière bleue venant de l'autre côté)
-    entity_t sun2 = ecs_create_entity(&tg->registry);
-    transform_t t2; transform_init(&t2);
-    t2.position[0] = -15.0f; t2.position[1] = 5.0f; t2.position[2] = -10.0f;
-    ecs_add_component(&tg->registry, sun2, COMP_TRANSFORM, &t2);
+    // 2. Point Light 1 : Lave (Rouge)
+    entity_t torch1 = ecs_create_entity(&tg->registry);
+    transform_t t_torch1; transform_init(&t_torch1);
+    t_torch1.position[0] = 0.0f; t_torch1.position[1] = 0.0f; t_torch1.position[2] = -5.0f;
+    ecs_add_component(&tg->registry, torch1, COMP_TRANSFORM, &t_torch1);
     
-    light_component_t l2;
-    light_component_init(&l2, (vec3){0.2f, 0.2f, 1.0f}, 0.8f); // Bleue
-    ecs_add_component(&tg->registry, sun2, COMP_LIGHT, &l2);
+    light_component_t l_torch1;
+    light_component_init_point(&l_torch1, (vec3){1.0f, 0.2f, 0.0f}, 2.0f, 0.09f, 0.032f); 
+    ecs_add_component(&tg->registry, torch1, COMP_LIGHT, &l_torch1);
 
-    // 3. (Optionnel) Une lumière rouge venant du bas (style lave)
-    entity_t sun3 = ecs_create_entity(&tg->registry);
-    transform_t t3; transform_init(&t3);
-    t3.position[0] = 0.0f; t3.position[1] = -20.0f; t3.position[2] = 0.0f;
-    ecs_add_component(&tg->registry, sun3, COMP_TRANSFORM, &t3);
+    // 3. Point Light 2 : Magie (Verte fluo)
+    entity_t torch2 = ecs_create_entity(&tg->registry);
+    transform_t t_torch2; transform_init(&t_torch2);
+    t_torch2.position[0] = 10.0f; t_torch2.position[1] = 5.0f; t_torch2.position[2] = -10.0f;
+    ecs_add_component(&tg->registry, torch2, COMP_TRANSFORM, &t_torch2);
     
-    light_component_t l3;
-    light_component_init(&l3, (vec3){1.0f, 0.1f, 0.1f}, 0.5f); // Rouge
-    ecs_add_component(&tg->registry, sun3, COMP_LIGHT, &l3);
+    light_component_t l_torch2;
+    light_component_init_point(&l_torch2, (vec3){0.3f, 0.1f, 0.7f}, 3.0f, 0.09f, 0.032f); 
+    ecs_add_component(&tg->registry, torch2, COMP_LIGHT, &l_torch2);
 
     // entity_t sun = ecs_create_entity(&tg->registry);
     // transform_t t;
