@@ -3,6 +3,8 @@
 #include "../../../core/log/log.h"
 #include "../../../engine/systems/s_render.h"
 #include "../../../engine/systems/s_skybox.h"
+#include "../../../engine/systems/s_atmosphere.h"
+#include "../../../engine/systems/s_clouds.h"
 #include "../../../engine/components/components.h"
 
 // Crée un rectangle qui couvre tout l'écran
@@ -33,9 +35,10 @@ void render_pipeline_init(render_pipeline_t* pipeline, int window_width, int win
     // 1. Initialiser tous les Shaders
     shader_init(&pipeline->pbr_shader, "res/shaders/pbr");
     shader_init(&pipeline->skybox_shader, "res/shaders/skybox");
+    shader_init(&pipeline->atmosphere_shader, "res/shaders/atmosphere");
+    shader_init(&pipeline->clouds_shader, "res/shaders/clouds");
     shader_init(&pipeline->blur_shader, "res/shaders/blur");
     shader_init(&pipeline->postprocess_shader, "res/shaders/postprocess");
-
     //initialiser la skybox
     s_skybox_init();
 
@@ -92,24 +95,12 @@ void render_pipeline_init(render_pipeline_t* pipeline, int window_width, int win
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Retour à l'écran normal
 }
 
-void render_pipeline_draw(render_pipeline_t* pipeline, ecs_registry_t* registry, renderer_t* renderer, environment_t* env) {
+void render_pipeline_draw(render_pipeline_t* pipeline, ecs_registry_t* registry, renderer_t* renderer, environment_t* env, camera_component_t* cam, entity_t cam_entity_id) {
     // ==========================================
     // ETAPE 0 : Chercher la camera active
     // ==========================================
-    camera_component_t* cam = NULL;
-    transform_t* cam_t = NULL;
-
-    signature_t cam_sig = (1 << COMP_TRANSFORM) | (1 << COMP_CAMERA);
-    for (entity_t e = 0; e < MAX_ENTITIES; e++) {
-        if ((registry->signatures[e] & cam_sig) == cam_sig) {
-            camera_component_t* c = ecs_get_component(registry, e, COMP_CAMERA);
-            if (c && c->is_active) {
-                cam = c;
-                cam_t = (transform_t*)ecs_get_component(registry, e, COMP_TRANSFORM);
-                break; // On a trouve !
-            }
-        }
-    }
+    cam = ecs_get_component(registry, cam_entity_id, COMP_CAMERA);
+    transform_t* cam_t  = (transform_t*)ecs_get_component(registry, cam_entity_id, COMP_TRANSFORM);
 
     if (!cam) return; // Pas de camera, on ne dessine rien !
 
@@ -128,9 +119,15 @@ void render_pipeline_draw(render_pipeline_t* pipeline, ecs_registry_t* registry,
     shader_set_uniform_vec3(&pipeline->pbr_shader, "u_viewPos", cam_t->position);
     s_render_update(registry, renderer, &pipeline->pbr_shader, &env->irradiance_map, &env->prefilter_map, &env->brdf_lut);
 
-    // 1.2 Skybox
+    // Skybox
     s_skybox_render(&env->env_cubemap, cam, &pipeline->skybox_shader);
 
+    // Nuages
+    vec3 sun_dir = {0.5f, 1.0f, 0.5f}; // On donne la même direction que ton soleil dans test_game.c
+    s_clouds_render(registry, renderer, &pipeline->clouds_shader, cam, sun_dir);
+
+    // Atmosphere
+    s_atmosphere_render(registry, renderer, &pipeline->atmosphere_shader, cam, cam_entity_id, sun_dir);
 
     // ==========================================
     // ETAPE 2 : FLOU GAUSSIEN (Ping-Pong FBOs)

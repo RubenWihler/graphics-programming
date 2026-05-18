@@ -78,8 +78,13 @@ static void test_game_start(game_t *game)
     transform_init(&cam_t);
     ecs_add_component(&tg->registry, camera_ent, COMP_TRANSFORM, &cam_t);
 
+    //on ne passe pas le component transform sur la stack a la camera mais recupere celui dans le sparse set
+    transform_t *cam_transf_ptr = ecs_get_component(&tg->registry, camera_ent, COMP_TRANSFORM);
+
     camera_component_t cam;
-    camera_component_init(&cam, tg->config.camera_ctrl.fov_deg, (float)winw / winh, tg->config.camera_ctrl.near_z, tg->config.camera_ctrl.far_z);
+    camera_component_init(&cam, tg->config.camera_ctrl.fov_deg, (float)winw / winh,
+                          tg->config.camera_ctrl.near_z, tg->config.camera_ctrl.far_z,
+                          cam_transf_ptr);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA, &cam);
 
     camera_controller_component_t cam_ctrl;
@@ -87,7 +92,7 @@ static void test_game_start(game_t *game)
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
 
     render_pipeline_init(&tg->pipeline, winw, winh);
-    environment_init_from_hdr(&tg->environment, "res/textures/galaxy_boosted.hdr");
+    environment_init_from_hdr(&tg->environment, "res/textures/galaxy.hdr");
 
     // Shader pour les lunes
     shader_init(&tg->shader, "res/shaders/pbr");
@@ -176,6 +181,47 @@ static void test_game_start(game_t *game)
         m.use_material_override = true;
         m.material_override = tg->gold_mat;
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
+
+        //--------- nuages --------//
+        entity_t clouds = ecs_create_entity(&tg->registry);
+        transform_t t_clouds;
+        transform_init(&t_clouds);
+        // 1.01 : Pile entre la Terre (1.0) et l'Atmosphère (1.025) !
+        glm_vec3_copy((vec3){1.01f, 1.01f, 1.01f}, t_clouds.scale); 
+        ecs_add_component(&tg->registry, clouds, COMP_TRANSFORM, &t_clouds);
+
+        mesh_component_t m_clouds;
+        m_clouds.model = asset_manager_get_model(&tg->asset_manager, "res/models/earth.obj", "res/models/");
+        m_clouds.use_material_override = false; 
+        ecs_add_component(&tg->registry, clouds, COMP_MESH, &m_clouds);
+
+        clouds_component_t c_clouds;
+        // Charge ton image de nuages téléchargée !
+        c_clouds.cloud_map = asset_manager_get_texture(&tg->asset_manager, "res/textures/earth/earth_clouds.jpg");
+        c_clouds.rotation_speed = 0.05f;
+        ecs_add_component(&tg->registry, clouds, COMP_CLOUDS, &c_clouds);
+
+        //--------- atmosphere --------//
+        entity_t atmosphere = ecs_create_entity(&tg->registry);
+
+        transform_t t_atmo;
+        transform_init(&t_atmo);
+        // On met l'atmosphère EXACTEMENT à la même position que la Terre
+        // Mais on augmente l'échelle de 5% (1.05)
+        glm_vec3_copy((vec3){1.025f, 1.025f, 1.025f}, t_atmo.scale);
+        ecs_add_component(&tg->registry, atmosphere, COMP_TRANSFORM, &t_atmo);
+
+        mesh_component_t m_atmo;
+        // On réutilise le même modèle de sphère 3D !
+        m_atmo.model = asset_manager_get_model(&tg->asset_manager, "res/models/earth.obj", "res/models/");
+        m_atmo.use_material_override = false; 
+        ecs_add_component(&tg->registry, atmosphere, COMP_MESH, &m_atmo);
+
+        atmosphere_component_t c_atmo;
+        c_atmo.planet_radius = 1.0f;       // Le rayon de base de la Terre
+        c_atmo.atmosphere_radius = 1.025f;  // Le rayon de la coquille (doit correspondre au scale !)
+        c_atmo.sun_intensity = 1.0f;       // Puissance globale de la couleur
+        ecs_add_component(&tg->registry, atmosphere, COMP_ATMOSPHERE, &c_atmo);
     }
 }
 
@@ -185,7 +231,7 @@ static void test_game_update(game_t *game, float delta_time)
     test_game_t *tg = container_of(game, test_game_t, game);
 
     // Faire tourner un objet via son transform (sur l'axe Y et Z par exemple)
-    s_rotator_update(&tg->registry, 1.0f, delta_time);
+    // s_rotator_update(&tg->registry, 1.0f, delta_time);
     s_camera_controller_update(&tg->registry, &tg->input_manager, delta_time);
 
 }
@@ -193,8 +239,30 @@ static void test_game_update(game_t *game, float delta_time)
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
-    render_pipeline_draw(&tg->pipeline, &tg->registry, 
-                         &tg->renderer, &tg->environment);
+
+    // 1. Chercher la camera active
+    camera_component_t* active_cam = NULL;
+    entity_t cam_entity = 0;
+
+    signature_t cam_sig = (1 << COMP_TRANSFORM) | (1 << COMP_CAMERA);
+    for (entity_t e = 0; e < MAX_ENTITIES; e++) {
+        if ((tg->registry.signatures[e] & cam_sig) == cam_sig) {
+            camera_component_t* c = ecs_get_component(&tg->registry, e, COMP_CAMERA);
+            if (c && c->is_active) {
+                cam_entity = e;
+                active_cam = c;
+                break; // On a trouve !
+            }
+        }
+    }
+
+    if (!active_cam) return; // Pas de camera
+
+
+    // render_pipeline_draw(&tg->pipeline, &tg->registry, 
+    //                      &tg->renderer, &tg->environment);
+    render_pipeline_draw(&tg->pipeline, &tg->registry, &tg->renderer, &tg->environment,
+                         active_cam, cam_entity);
 }
 
 //s'execute avant le lancement du jeu
@@ -208,6 +276,8 @@ static bool test_game_init(game_t *game)
     ecs_register_component(&tg->registry, COMP_CAMERA, sizeof(camera_component_t));
     ecs_register_component(&tg->registry, COMP_CAMERA_CONTROLLER, sizeof(camera_controller_component_t));
     ecs_register_component(&tg->registry, COMP_LIGHT, sizeof(light_component_t));
+    ecs_register_component(&tg->registry, COMP_ATMOSPHERE, sizeof(atmosphere_component_t));
+    ecs_register_component(&tg->registry, COMP_CLOUDS, sizeof(clouds_component_t));
 
     // Input manager
     if(!input_manager_init(&tg->input_manager, game->window))

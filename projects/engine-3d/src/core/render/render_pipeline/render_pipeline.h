@@ -13,6 +13,8 @@ typedef struct {
     // --- Shaders de la scène ---
     shader_t pbr_shader;
     shader_t skybox_shader;
+    shader_t atmosphere_shader;
+    shader_t clouds_shader;
 
     // --- Shaders de Post-Processing ---
     shader_t blur_shader;
@@ -33,6 +35,6 @@ typedef struct {
 } render_pipeline_t;
 
 void render_pipeline_init(render_pipeline_t* pipeline, int window_width, int window_height);
-void render_pipeline_draw(render_pipeline_t* pipeline, ecs_registry_t* registry, renderer_t* renderer, environment_t* env);
+void render_pipeline_draw(render_pipeline_t* pipeline, ecs_registry_t* registry, renderer_t* renderer, environment_t* env, camera_component_t* cam, entity_t cam_entity_id);
 void render_pipeline_destroy(render_pipeline_t* pipeline);
 void render_pipeline_resize(render_pipeline_t* pipeline, int width, int height);

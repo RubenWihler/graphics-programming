@@ -58,6 +58,10 @@ static void render_meshs(ecs_registry_t* registry, renderer_t* renderer, shader_
 
     for (entity_t entity = 0; entity < MAX_ENTITIES; entity++) {
         if ((registry->signatures[entity] & required_signature) == required_signature) {
+            if ((registry->signatures[entity] & (1 << COMP_ATMOSPHERE)) != 0 || 
+                (registry->signatures[entity] & (1 << COMP_CLOUDS)) != 0) {
+                continue; 
+            }
 
             transform_t* t = (transform_t*)ecs_get_component(registry, entity, COMP_TRANSFORM);
             mesh_component_t* m = (mesh_component_t*)ecs_get_component(registry, entity, COMP_MESH);
@@ -66,6 +70,7 @@ static void render_meshs(ecs_registry_t* registry, renderer_t* renderer, shader_
                 mat4 model_matrix;
                 transform_get_matrix(t, model_matrix);
                 shader_set_uniform_mat4(shader, "u_model", model_matrix);
+
 
                 for (size_t i = 0; i < m->model->submesh_count; i++) {
                     material_t* mat_to_use;

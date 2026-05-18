@@ -1,9 +1,11 @@
 #pragma once
 
 #include "../../core/vendor/cglm/cglm.h"
+#include "c_transform.h"
 #include <stdbool.h>
 
 typedef struct {
+    transform_component_t* transform;
     float fov_deg;
     float near_z;
     float far_z;
@@ -13,7 +15,8 @@ typedef struct {
 } camera_component_t;
 
 // Helper pour initialiser la matrice de projection facilement
-static inline void camera_component_init(camera_component_t* cam, float fov_deg, float aspect_ratio, float near_z, float far_z) {
+static inline void camera_component_init(camera_component_t* cam, float fov_deg, float aspect_ratio, float near_z, float far_z, transform_component_t* transform) {
+    cam->transform = transform;
     cam->fov_deg = fov_deg;
     cam->near_z = near_z;
     cam->far_z = far_z;
