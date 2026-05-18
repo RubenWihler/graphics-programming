@@ -25,6 +25,7 @@
 #include "../../engine/systems/s_render.h"
 #include "../../engine/systems/s_rotator.h"
 #include "../../engine/systems/s_camera_controller.h"
+#include "../../engine/systems/s_skybox.h"
 
 struct _test_game_t {
     game_t game;
@@ -42,6 +43,19 @@ struct _test_game_t {
     //on le fait a la main
     material_t gold_mat;
     texture_t texture;
+
+    cubemap_t env_cubemap;
+    shader_t skybox_shader;
+    shader_t conversion_shader; // Pour l'usine hdr->cubemap
+
+    cubemap_t irradiance_map;
+    shader_t irradiance_shader;
+
+    cubemap_t prefilter_map;
+    shader_t prefilter_shader;
+
+    texture_t brdf_lut;
+    shader_t brdf_shader;
 };
 
 //game api
@@ -80,8 +94,25 @@ static void test_game_start(game_t *game)
     camera_controller_init(&cam_ctrl, tg->config.camera_ctrl.movement_speed, tg->config.camera_ctrl.mouse_sensitivity);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
 
-    // Shader
-    shader_init(&tg->shader, "res/shaders/default");
+    // ------ SKY BOX ------- //
+    s_skybox_init();
+    shader_init(&tg->skybox_shader, "res/shaders/skybox");
+    shader_init(&tg->conversion_shader, "res/shaders/hdr_to_cubemap");
+    if (!texture_load_cubemap_from_hdr(&tg->env_cubemap, "res/textures/ciel2.hdr", &tg->conversion_shader)) {
+        LOG_ERROR("Erreur critique: Impossible de generer la Skybox HDR.");
+    }
+
+    shader_init(&tg->irradiance_shader, "res/shaders/irradiance");
+    texture_create_irradiance_map(&tg->irradiance_map, &tg->env_cubemap, &tg->irradiance_shader);
+
+    shader_init(&tg->prefilter_shader, "res/shaders/prefilter");
+    texture_create_prefilter_map(&tg->prefilter_map, &tg->env_cubemap, &tg->prefilter_shader);
+
+    shader_init(&tg->brdf_shader, "res/shaders/brdf");
+    texture_create_brdf_lut(&tg->brdf_lut, &tg->brdf_shader);
+
+    // Shader pour les lunes
+    shader_init(&tg->shader, "res/shaders/pbr");
     //si le shader a besoin d'uniforms additionnel:
     // shader_bind(&tg->shader);
     // uniforms specifique...
@@ -92,8 +123,14 @@ static void test_game_start(game_t *game)
     glm_vec3_copy((vec3){0.751f, 0.606f, 0.226f}, tg->gold_mat.diffuse);
     glm_vec3_copy((vec3){0.628f, 0.555f, 0.366f}, tg->gold_mat.specular);
     tg->gold_mat.shininess = 51.2f; // Brillance métallique
-    tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
+    // tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
 
+    // // Au lieu de définir ambient/diffuse/specular à la main...
+    // material_init_pbr(&tg->gold_mat, (vec3){1.0f, 0.71f, 0.29f}, 1.0f, 0.2f, 1.0f);
+    // Albedo de la texture, 0% Métallique, 80% Rugueux
+    material_init_pbr(&tg->gold_mat, (vec3){1.0f, 0.71f, 0.29f}, 0.9f, 0.1f, 1.0f);
+    // Si tu veux une texture (optionnel) :
+    tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
 
     // 1. Soleil de Nuit (très faible, bleuté pour faire "clair de lune")
     entity_t sun = ecs_create_entity(&tg->registry);
@@ -102,17 +139,17 @@ static void test_game_start(game_t *game)
     ecs_add_component(&tg->registry, sun, COMP_TRANSFORM, &t_sun);
     
     light_component_t l_sun;
-    light_component_init_directional(&l_sun, (vec3){0.2f, 0.3f, 0.5f}, 0.2f); // Faible intensité !
+    light_component_init_directional(&l_sun, (vec3){0.5f, 0.5f, 0.5f}, 0.2f); // Faible intensité !
     ecs_add_component(&tg->registry, sun, COMP_LIGHT, &l_sun);
 
     // 2. Point Light 1 : Lave (Rouge)
     entity_t torch1 = ecs_create_entity(&tg->registry);
     transform_t t_torch1; transform_init(&t_torch1);
-    t_torch1.position[0] = 0.0f; t_torch1.position[1] = 0.0f; t_torch1.position[2] = -5.0f;
+    t_torch1.position[0] = 0.0f; t_torch1.position[1] = 10.0f; t_torch1.position[2] = -5.0f;
     ecs_add_component(&tg->registry, torch1, COMP_TRANSFORM, &t_torch1);
     
     light_component_t l_torch1;
-    light_component_init_point(&l_torch1, (vec3){1.0f, 0.2f, 0.0f}, 2.0f, 0.09f, 0.032f); 
+    light_component_init_point(&l_torch1, (vec3){1.0f, 0.2f, 0.0f}, 9.0f, 0.20f, 0.092f); 
     ecs_add_component(&tg->registry, torch1, COMP_LIGHT, &l_torch1);
 
     // 3. Point Light 2 : Magie (Verte fluo)
@@ -122,7 +159,7 @@ static void test_game_start(game_t *game)
     ecs_add_component(&tg->registry, torch2, COMP_TRANSFORM, &t_torch2);
     
     light_component_t l_torch2;
-    light_component_init_point(&l_torch2, (vec3){0.3f, 0.1f, 0.7f}, 3.0f, 0.09f, 0.032f); 
+    light_component_init_point(&l_torch2, (vec3){0.3f, 0.1f, 0.7f}, 9.0f, 0.20f, 0.092f); 
     ecs_add_component(&tg->registry, torch2, COMP_LIGHT, &l_torch2);
 
     // entity_t sun = ecs_create_entity(&tg->registry);
@@ -137,21 +174,23 @@ static void test_game_start(game_t *game)
     // light_component_init(&sun_light, (vec3){1.0f, 0.9f, 0.8f}, 1.2f);
     // ecs_add_component(&tg->registry, sun, COMP_LIGHT, &sun_light);
 
-    for (size_t i = 0; i < 10000; i++){
+    for (size_t i = 0; i < 1; i++){
         //Création de l'Entité
         entity_t moon = ecs_create_entity(&tg->registry);
 
         //Ajout du Transform
         transform_t t;
         transform_init(&t);
-        t.position[0] = ((float)(rand() % 100) - 50.0f);
-        t.position[1] = ((float)(rand() % 100) - 50.0f);
-        t.position[2] = ((float)(rand() % 100) - 50.0f);
+        vec3 scale = {100.0f, 100.0f, 100.0f};
+        glm_vec3_copy(scale, t.scale);
+        // t.position[0] = ((float)(rand() % 100) - 50.0f);
+        // t.position[1] = ((float)(rand() % 100) - 50.0f);
+        // t.position[2] = ((float)(rand() % 100) - 50.0f);
         ecs_add_component(&tg->registry, moon, COMP_TRANSFORM, &t);
 
         //Ajout du Mesh
         mesh_component_t m;
-        m.model = asset_manager_get_model(&tg->asset_manager, "res/models/sphere.obj", "res/models/");
+        m.model = asset_manager_get_model(&tg->asset_manager, "res/models/kayle.obj", "res/models/");
         m.use_material_override = true;
         m.material_override = tg->gold_mat;
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
@@ -166,6 +205,7 @@ static void test_game_update(game_t *game, float delta_time)
     // Faire tourner un objet via son transform (sur l'axe Y et Z par exemple)
     s_rotator_update(&tg->registry, 1.0f, delta_time);
     s_camera_controller_update(&tg->registry, &tg->input_manager, delta_time);
+
 }
 
 static void test_game_render(game_t *game)
@@ -197,10 +237,16 @@ static void test_game_render(game_t *game)
     shader_bind(&tg->shader);
     shader_set_uniform_vec3(&tg->shader, "u_viewPos", active_cam_t->position);
 
-    // 3. Dessiner la scene
-    s_render_update(&tg->registry, &tg->renderer, &tg->shader);
+    //Dessiner la scene
+    s_render_update(&tg->registry, &tg->renderer, &tg->shader,
+                    &tg->irradiance_map, &tg->prefilter_map, &tg->brdf_lut);
 
-    renderer_end_scene(&tg->renderer);}
+    if (active_cam) {
+        s_skybox_render(&tg->env_cubemap, active_cam, &tg->skybox_shader);
+    }
+
+    renderer_end_scene(&tg->renderer);
+}
 
 //s'execute avant le lancement du jeu
 static bool test_game_init(game_t *game)
@@ -252,6 +298,7 @@ static bool test_game_init(game_t *game)
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     return true;
 }

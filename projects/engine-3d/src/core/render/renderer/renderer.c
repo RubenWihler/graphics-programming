@@ -72,16 +72,16 @@ void renderer_draw(const renderer_t *renderer, const vertex_array_t *vao,
         glm_mat4_mul(*(renderer->data.proj_mat), *(renderer->data.view_mat), view_proj);
         shader_set_uniform(shader, "u_view_proj", view_proj);
     }
-
     // --- ENVOI DU MATERIAU ---
     if (material) {
-        // Envoi des couleurs et de la brillance
-        shader_set_uniform_vec3(shader, "u_material.ambient", (float*)material->ambient);
-        shader_set_uniform_vec3(shader, "u_material.diffuse", (float*)material->diffuse);
-        shader_set_uniform_vec3(shader, "u_material.specular", (float*)material->specular);
-        shader_set_uniform_1f(shader, "u_material.shininess", material->shininess);
+        // Envoi des nouvelles variables PBR !
+        shader_set_uniform_vec3(shader, "u_albedo", material->albedo);
+        shader_set_uniform_1f(shader, "u_metallic", material->metallic);
+        shader_set_uniform_1f(shader, "u_roughness", material->roughness);
+        shader_set_uniform_1f(shader, "u_ao", material->ao);
 
-        // Gestion de la texture optionnelle
+        // Gestion de la texture optionnelle (Albedo)
+        // Attention : Vérifie bien que ton pbr/frag.glsl utilise "u_material.diffuse_map" et "u_material.has_diffuse_map"
         if (material->diffuse_map) {
             uint32_t slot = 0;
             texture_bind(material->diffuse_map, &slot);

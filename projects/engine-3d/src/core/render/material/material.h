@@ -8,17 +8,29 @@
 typedef struct {
     char name[64]; // Nom du matériau (utile pour le debug)
 
+    // --- Anciennes valeurs (Phong / .obj basique) ---
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     float shininess;
 
-    // Chemins vers les textures (pour pouvoir les charger)
-    char diffuse_texname[256];
-    texture_t *diffuse_map; // Le pointeur vers la texture une fois chargée
+    // --- Nouvelles valeurs (PBR) ---
+    vec3 albedo;
+    float metallic;
+    float roughness;
+    float ao;
 
-    // On pourrait ajouter spec_map, bump_map, etc. plus tard
+    texture_t* diffuse_map; // On l'utilisera comme albedo_map
 } material_t;
+
+// Petite fonction d'aide pour initialiser un matériau PBR
+static inline void material_init_pbr(material_t* mat, vec3 albedo, float metallic, float roughness, float ao) {
+    glm_vec3_copy(albedo, mat->albedo);
+    mat->metallic = metallic;
+    mat->roughness = roughness;
+    mat->ao = ao;
+    mat->diffuse_map = NULL;
+}
 
 // Petite fonction utilitaire pour initialiser un matériau par défaut (gris mat)
 static inline void material_init_default(material_t *mat) {

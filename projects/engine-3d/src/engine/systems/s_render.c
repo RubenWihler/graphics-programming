@@ -4,6 +4,8 @@
 #include "../../engine/components/c_mesh.h"
 #include "../../engine/components/c_light.h"
 
+#include "../../core/vendor/glad/glad.h"
+
 #define MAX_LIGHTS 8 // Doit correspondre à la valeur dans frag.glsl
 
 #define MAX_LIGHTS 8
@@ -81,8 +83,22 @@ static void render_meshs(ecs_registry_t* registry, renderer_t* renderer, shader_
     }
 }
 
-void s_render_update(ecs_registry_t* registry, renderer_t* renderer, shader_t* shader) 
+void s_render_update(ecs_registry_t* registry, renderer_t* renderer, shader_t* shader, 
+                     cubemap_t* irradiance_map, cubemap_t* prefilter_map, texture_t* brdf_lut) 
 {
     compute_lights(registry, renderer, shader);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irradiance_map->id); 
+    shader_set_uniform_1i(shader, "u_irradianceMap", 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilter_map->id); 
+    shader_set_uniform_1i(shader, "u_prefilterMap", 2);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, brdf_lut->renderer_id); 
+    shader_set_uniform_1i(shader, "u_brdfLUT", 3);
+
     render_meshs(registry, renderer, shader);
 }
