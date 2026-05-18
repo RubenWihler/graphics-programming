@@ -71,7 +71,7 @@ model_t* asset_manager_get_model(asset_manager_t* am, const char* filepath, cons
 texture_t* asset_manager_get_texture(asset_manager_t* am, const char* filepath) {
     // cherche en O(1) dans le cache
     texture_t* cached = (texture_t*)hashmap_get(am->textures, filepath);
-    if (cached != NULL) {
+    if (cached != NULL && strcmp(cached->filepath, filepath) == 0) {
         return cached;
     }
 

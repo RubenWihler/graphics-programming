@@ -20,7 +20,16 @@ typedef struct {
     float roughness;
     float ao;
 
-    texture_t* diffuse_map; // On l'utilisera comme albedo_map
+    // --- Les Textures PBR ---
+    texture_t* albedo_map;    // Remplace "diffuse_map" pour être cohérent
+    texture_t* normal_map;
+    texture_t* metallic_map;
+    texture_t* roughness_map;
+    texture_t* ao_map;
+    texture_t* emission_map;
+
+    //on garde la diffuse_map au cas ou on veut utiliser phong
+    texture_t* diffuse_map;
 } material_t;
 
 // Petite fonction d'aide pour initialiser un matériau PBR
@@ -29,6 +38,13 @@ static inline void material_init_pbr(material_t* mat, vec3 albedo, float metalli
     mat->metallic = metallic;
     mat->roughness = roughness;
     mat->ao = ao;
+
+    mat->albedo_map = NULL;
+    mat->normal_map = NULL;
+    mat->metallic_map = NULL;
+    mat->roughness_map = NULL;
+    mat->ao_map = NULL;
+    mat->emission_map = NULL;
     mat->diffuse_map = NULL;
 }
 

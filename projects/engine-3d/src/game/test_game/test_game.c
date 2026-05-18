@@ -98,7 +98,7 @@ static void test_game_start(game_t *game)
     s_skybox_init();
     shader_init(&tg->skybox_shader, "res/shaders/skybox");
     shader_init(&tg->conversion_shader, "res/shaders/hdr_to_cubemap");
-    if (!texture_load_cubemap_from_hdr(&tg->env_cubemap, "res/textures/ciel2.hdr", &tg->conversion_shader)) {
+    if (!texture_load_cubemap_from_hdr(&tg->env_cubemap, "res/textures/galaxy.hdr", &tg->conversion_shader)) {
         LOG_ERROR("Erreur critique: Impossible de generer la Skybox HDR.");
     }
 
@@ -117,7 +117,7 @@ static void test_game_start(game_t *game)
     // shader_bind(&tg->shader);
     // uniforms specifique...
 
-    // Material
+    // --------------- Material ------------------- //
     material_init_default(&tg->gold_mat);
     glm_vec3_copy((vec3){0.247f, 0.199f, 0.074f}, tg->gold_mat.ambient);
     glm_vec3_copy((vec3){0.751f, 0.606f, 0.226f}, tg->gold_mat.diffuse);
@@ -128,39 +128,43 @@ static void test_game_start(game_t *game)
     // // Au lieu de définir ambient/diffuse/specular à la main...
     // material_init_pbr(&tg->gold_mat, (vec3){1.0f, 0.71f, 0.29f}, 1.0f, 0.2f, 1.0f);
     // Albedo de la texture, 0% Métallique, 80% Rugueux
-    material_init_pbr(&tg->gold_mat, (vec3){1.0f, 0.71f, 0.29f}, 0.9f, 0.1f, 1.0f);
-    // Si tu veux une texture (optionnel) :
-    tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
+    material_init_pbr(&tg->gold_mat, (vec3){0.7f, 1.0f, 1.0f}, 0.7f, 0.5f, 1.0f);
+    // tg->gold_mat.diffuse_map = asset_manager_get_texture(&tg->asset_manager, "res/models/moon_tex.png");
+    tg->gold_mat.albedo_map = asset_manager_get_texture(&tg->asset_manager,     "res/textures/earth/earth_albedo.jpg");
+    tg->gold_mat.roughness_map = asset_manager_get_texture(&tg->asset_manager,  "res/textures/earth/earth_roughness.jpg");
+    tg->gold_mat.normal_map = asset_manager_get_texture(&tg->asset_manager,     "res/textures/earth/earth_normal.jpg");
+    tg->gold_mat.emission_map = asset_manager_get_texture(&tg->asset_manager,   "res/textures/earth/earth_emission.png");
+    // tg->gold_mat.metallic_map = asset_manager_get_texture(&tg->asset_manager,   "res/textures/earth/terrain_metallic.png");
+    // tg->gold_mat.ao_map = asset_manager_get_texture(&tg->asset_manager,         "res/textures/earth/terrain_ao.png");
+
+    //------------------ LUMIERES -----------------------//
 
     // 1. Soleil de Nuit (très faible, bleuté pour faire "clair de lune")
     entity_t sun = ecs_create_entity(&tg->registry);
     transform_t t_sun; transform_init(&t_sun);
     t_sun.position[0] = 0.5f; t_sun.position[1] = 1.0f; t_sun.position[2] = 0.5f;
     ecs_add_component(&tg->registry, sun, COMP_TRANSFORM, &t_sun);
-    
     light_component_t l_sun;
-    light_component_init_directional(&l_sun, (vec3){0.5f, 0.5f, 0.5f}, 0.2f); // Faible intensité !
+    light_component_init_directional(&l_sun, (vec3){0.8f, 0.8f, 0.8f}, 0.8f); // Faible intensité !
     ecs_add_component(&tg->registry, sun, COMP_LIGHT, &l_sun);
 
-    // 2. Point Light 1 : Lave (Rouge)
-    entity_t torch1 = ecs_create_entity(&tg->registry);
-    transform_t t_torch1; transform_init(&t_torch1);
-    t_torch1.position[0] = 0.0f; t_torch1.position[1] = 10.0f; t_torch1.position[2] = -5.0f;
-    ecs_add_component(&tg->registry, torch1, COMP_TRANSFORM, &t_torch1);
-    
-    light_component_t l_torch1;
-    light_component_init_point(&l_torch1, (vec3){1.0f, 0.2f, 0.0f}, 9.0f, 0.20f, 0.092f); 
-    ecs_add_component(&tg->registry, torch1, COMP_LIGHT, &l_torch1);
-
-    // 3. Point Light 2 : Magie (Verte fluo)
-    entity_t torch2 = ecs_create_entity(&tg->registry);
-    transform_t t_torch2; transform_init(&t_torch2);
-    t_torch2.position[0] = 10.0f; t_torch2.position[1] = 5.0f; t_torch2.position[2] = -10.0f;
-    ecs_add_component(&tg->registry, torch2, COMP_TRANSFORM, &t_torch2);
-    
-    light_component_t l_torch2;
-    light_component_init_point(&l_torch2, (vec3){0.3f, 0.1f, 0.7f}, 9.0f, 0.20f, 0.092f); 
-    ecs_add_component(&tg->registry, torch2, COMP_LIGHT, &l_torch2);
+    // // 2. Point Light 1 : Lave (Rouge)
+    // entity_t torch1 = ecs_create_entity(&tg->registry);
+    // transform_t t_torch1; transform_init(&t_torch1);
+    // t_torch1.position[0] = 0.0f; t_torch1.position[1] = 5.0f; t_torch1.position[2] = -2.0f;
+    // ecs_add_component(&tg->registry, torch1, COMP_TRANSFORM, &t_torch1);
+    // light_component_t l_torch1;
+    // light_component_init_point(&l_torch1, (vec3){0.7f, 0.2f, 0.3f}, 9.0f, 0.20f, 0.092f); 
+    // ecs_add_component(&tg->registry, torch1, COMP_LIGHT, &l_torch1);
+    //
+    // // 3. Point Light 2 : Magie (Verte fluo)
+    // entity_t torch2 = ecs_create_entity(&tg->registry);
+    // transform_t t_torch2; transform_init(&t_torch2);
+    // t_torch2.position[0] = 10.0f; t_torch2.position[1] = 5.0f; t_torch2.position[2] = -10.0f;
+    // ecs_add_component(&tg->registry, torch2, COMP_TRANSFORM, &t_torch2);
+    // light_component_t l_torch2;
+    // light_component_init_point(&l_torch2, (vec3){0.3f, 0.1f, 0.7f}, 9.0f, 0.20f, 0.092f); 
+    // ecs_add_component(&tg->registry, torch2, COMP_LIGHT, &l_torch2);
 
     // entity_t sun = ecs_create_entity(&tg->registry);
     // transform_t t;
@@ -181,7 +185,7 @@ static void test_game_start(game_t *game)
         //Ajout du Transform
         transform_t t;
         transform_init(&t);
-        vec3 scale = {100.0f, 100.0f, 100.0f};
+        vec3 scale = {1.0f, 1.0f, 1.0f};
         glm_vec3_copy(scale, t.scale);
         // t.position[0] = ((float)(rand() % 100) - 50.0f);
         // t.position[1] = ((float)(rand() % 100) - 50.0f);
@@ -190,7 +194,7 @@ static void test_game_start(game_t *game)
 
         //Ajout du Mesh
         mesh_component_t m;
-        m.model = asset_manager_get_model(&tg->asset_manager, "res/models/kayle.obj", "res/models/");
+        m.model = asset_manager_get_model(&tg->asset_manager, "res/models/earth.obj", "res/models/");
         m.use_material_override = true;
         m.material_override = tg->gold_mat;
         ecs_add_component(&tg->registry, moon, COMP_MESH, &m);
