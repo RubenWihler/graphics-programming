@@ -16,6 +16,8 @@
 #include "../../core/inputs/input_manager.h"
 #include "../../core/render/shader/shader.h"
 #include "../../core/render/texture/texture.h"
+#include "../../core/render/environment/environment.h"
+#include "../../core/render/render_pipeline/render_pipeline.h"
 #include "../../core/render/renderer/renderer.h"
 #include "../../core/math/transform/transform.h"
 
@@ -33,8 +35,11 @@ struct _test_game_t {
 
     ecs_registry_t registry;
     input_manager_t input_manager;
-    renderer_t renderer;
     asset_manager_t asset_manager;
+
+    renderer_t renderer;
+    render_pipeline_t pipeline;
+    environment_t environment;
 
     //objet 1
     shader_t shader;
@@ -43,19 +48,6 @@ struct _test_game_t {
     //on le fait a la main
     material_t gold_mat;
     texture_t texture;
-
-    cubemap_t env_cubemap;
-    shader_t skybox_shader;
-    shader_t conversion_shader; // Pour l'usine hdr->cubemap
-
-    cubemap_t irradiance_map;
-    shader_t irradiance_shader;
-
-    cubemap_t prefilter_map;
-    shader_t prefilter_shader;
-
-    texture_t brdf_lut;
-    shader_t brdf_shader;
 };
 
 //game api
@@ -94,22 +86,8 @@ static void test_game_start(game_t *game)
     camera_controller_init(&cam_ctrl, tg->config.camera_ctrl.movement_speed, tg->config.camera_ctrl.mouse_sensitivity);
     ecs_add_component(&tg->registry, camera_ent, COMP_CAMERA_CONTROLLER, &cam_ctrl);
 
-    // ------ SKY BOX ------- //
-    s_skybox_init();
-    shader_init(&tg->skybox_shader, "res/shaders/skybox");
-    shader_init(&tg->conversion_shader, "res/shaders/hdr_to_cubemap");
-    if (!texture_load_cubemap_from_hdr(&tg->env_cubemap, "res/textures/galaxy.hdr", &tg->conversion_shader)) {
-        LOG_ERROR("Erreur critique: Impossible de generer la Skybox HDR.");
-    }
-
-    shader_init(&tg->irradiance_shader, "res/shaders/irradiance");
-    texture_create_irradiance_map(&tg->irradiance_map, &tg->env_cubemap, &tg->irradiance_shader);
-
-    shader_init(&tg->prefilter_shader, "res/shaders/prefilter");
-    texture_create_prefilter_map(&tg->prefilter_map, &tg->env_cubemap, &tg->prefilter_shader);
-
-    shader_init(&tg->brdf_shader, "res/shaders/brdf");
-    texture_create_brdf_lut(&tg->brdf_lut, &tg->brdf_shader);
+    render_pipeline_init(&tg->pipeline, winw, winh);
+    environment_init_from_hdr(&tg->environment, "res/textures/galaxy_boosted.hdr");
 
     // Shader pour les lunes
     shader_init(&tg->shader, "res/shaders/pbr");
@@ -215,41 +193,8 @@ static void test_game_update(game_t *game, float delta_time)
 static void test_game_render(game_t *game)
 {
     test_game_t *tg = container_of(game, test_game_t, game);
-
-    // 1. Chercher la camera active
-    camera_component_t* active_cam = NULL;
-    transform_t* active_cam_t = NULL;
-
-    signature_t cam_sig = (1 << COMP_TRANSFORM) | (1 << COMP_CAMERA);
-    for (entity_t e = 0; e < MAX_ENTITIES; e++) {
-        if ((tg->registry.signatures[e] & cam_sig) == cam_sig) {
-            camera_component_t* c = ecs_get_component(&tg->registry, e, COMP_CAMERA);
-            if (c && c->is_active) {
-                active_cam = c;
-                active_cam_t = (transform_t*)ecs_get_component(&tg->registry, e, COMP_TRANSFORM);
-                break; // On a trouve !
-            }
-        }
-    }
-
-    if (!active_cam) return; // Pas de camera, on ne dessine rien !
-    
-    //Envoyer les infos au renderer
-    renderer_begin_scene(&tg->renderer, &active_cam->view_matrix, &active_cam->projection_matrix);
-
-    // envoiyer les matrices au shaders
-    shader_bind(&tg->shader);
-    shader_set_uniform_vec3(&tg->shader, "u_viewPos", active_cam_t->position);
-
-    //Dessiner la scene
-    s_render_update(&tg->registry, &tg->renderer, &tg->shader,
-                    &tg->irradiance_map, &tg->prefilter_map, &tg->brdf_lut);
-
-    if (active_cam) {
-        s_skybox_render(&tg->env_cubemap, active_cam, &tg->skybox_shader);
-    }
-
-    renderer_end_scene(&tg->renderer);
+    render_pipeline_draw(&tg->pipeline, &tg->registry, 
+                         &tg->renderer, &tg->environment);
 }
 
 //s'execute avant le lancement du jeu
@@ -358,6 +303,7 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
     float aspect_ratio = (float)width / (float)height;
     camera_component_resize(active_cam, aspect_ratio);
+    render_pipeline_resize(&tg->pipeline, width, height);
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

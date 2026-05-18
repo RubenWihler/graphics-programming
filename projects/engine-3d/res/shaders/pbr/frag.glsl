@@ -1,5 +1,6 @@
 #version 330 core
-layout(location=0) out vec4 FragColor;
+layout(location=0) out vec4 FragColor;      // Sortie 1 : La scène normale
+layout(location=1) out vec4 BrightColor;    // Sortie 2 : Les zones brillantes
 
 in vec3 v_FragPos;
 in vec3 v_Normal;
@@ -222,16 +223,26 @@ void main()
         // emission *= 5.0; // Effet néon / soleil très brillant
     }
 
+
     // --- 5. RÉSULTAT FINAL ---
     // On ajoute l'émission à la lumière calculée (ambiante + dynamique)
+    
+    // ATTENTION : SUPPRIME OU COMMENTE LE TONE MAPPING ET LE GAMMA ICI !
+    // float exposure = 1.0;
+    // color = vec3(1.0) - exp(-color * exposure);
+    // color = pow(color, vec3(1.0/2.2)); 
+
     vec3 color = ambient + Lo + emission;
-
-    // Tone Mapping (Exposure)
-    float exposure = 1.0;
-    color = vec3(1.0) - exp(-color * exposure);
-
-    // Gamma Correction (Retour de l'espace Linéaire vers l'écran sRGB)
-    color = pow(color, vec3(1.0/2.2)); 
-
+    // 1. On écrit la couleur brute HDR dans la première texture
     FragColor = vec4(color, 1.0);
+
+    // 2. On isole les zones brillantes pour la deuxième texture
+    // On calcule la luminance du pixel (la luminosité perçue par l'oeil)
+    float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    
+    if(brightness > 1.0) { // Seules les lumières fortes (Soleil, Villes) passent !
+        BrightColor = vec4(color, 1.0);
+    } else {
+        BrightColor = vec4(0.0, 0.0, 0.0, 1.0); // Le reste est noir
+    }
 }
